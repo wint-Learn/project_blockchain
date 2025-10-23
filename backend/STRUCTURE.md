@@ -1,10 +1,20 @@
 # Cấu trúc Thư mục Backend - Changelog
 
-## 📅 Ngày cập nhật: 2025-10-23
+## 📅 Ngày cập nhật: 2025-01-23
 
 ### ✨ Thay đổi
 
-Đã tổ chức lại toàn bộ cấu trúc backend để dễ quản lý và maintain hơn.
+**Giai đoạn 2 (MVC Refactoring - 2025-01-23):**
+- ✅ Tách server.js monolithic (304 lines) thành MVC pattern
+- ✅ Tạo `src/routes/` với 4 route files (health, did, auth, admin)
+- ✅ Tạo `src/controllers/` với 3 controller files (did, auth, admin)
+- ✅ Server.js giờ chỉ còn ~140 lines (setup + mounting routes)
+- ✅ Backward compatibility maintained cho existing API paths
+
+**Giai đoạn 1 (Folder Restructure - 2025-01-23):**
+- ✅ Tổ chức lại toàn bộ cấu trúc backend để dễ quản lý và maintain hơn
+- ✅ Tạo các thư mục src/, scripts/, tests/, docs/
+- ✅ Di chuyển tất cả files vào đúng thư mục
 
 ## 📁 Cấu trúc Mới
 
@@ -12,7 +22,16 @@
 backend/
 │
 ├── src/                          # 🔵 Source code chính
-│   ├── server.js                # Entry point - Express server
+│   ├── server.js                # Entry point - Express server (MVC pattern)
+│   ├── routes/                  # 🆕 API routes
+│   │   ├── health.routes.js
+│   │   ├── did.routes.js
+│   │   ├── auth.routes.js
+│   │   └── admin.routes.js
+│   ├── controllers/             # 🆕 Business logic
+│   │   ├── did.controller.js
+│   │   ├── auth.controller.js
+│   │   └── admin.controller.js
 │   ├── middleware/              # Express middleware
 │   │   ├── audit-middleware.js
 │   │   └── validation-schemas.js
@@ -38,10 +57,36 @@ backend/
 ├── .env                          # Environment variables
 ├── .gitignore
 ├── package.json
+├── STRUCTURE.md                  # This file
 └── README.md                     # Root README (quick start)
 ```
 
 ## 🔄 Migration từ cấu trúc cũ
+
+### Giai đoạn 2: MVC Refactoring (2025-01-23)
+
+| Monolithic server.js (304 lines) | MVC Pattern |
+|----------------------------------|-------------|
+| `GET /health` logic | `src/routes/health.routes.js` |
+| `GET /api/did/:address` logic | `src/controllers/did.controller.js` → `src/routes/did.routes.js` |
+| `POST /api/register` logic | `src/controllers/auth.controller.js#register` |
+| `POST /api/login` logic | `src/controllers/auth.controller.js#login` |
+| `detectAnomaly()` function | `src/controllers/auth.controller.js#detectAnomaly` |
+| `GET /api/logs` logic | `src/controllers/admin.controller.js#getLoginLogs` |
+| *(monolithic)* | `src/server.js` (140 lines, setup + mount routes only) |
+
+**Routes Structure:**
+- `/health` → `healthRoutes` → health check
+- `/api/did` → `didRoutes` → `didController.getDIDInfo`
+- `/api/auth` → `authRoutes` → `authController.register`, `authController.login`
+- `/api/admin` → `adminRoutes` → `adminController.getLoginLogs`
+
+**Backward Compatibility:**
+- `/api/register` → forwards to `authController.register`
+- `/api/login` → forwards to `authController.login`
+- `/api/logs` → forwards to `adminController.getLoginLogs`
+
+### Giai đoạn 1: Folder Restructure (2025-01-23)
 
 ### Cấu trúc cũ → Cấu trúc mới
 
@@ -90,6 +135,17 @@ npm run test:validation # Test Zod validation
 
 ## ✅ Đã test
 
+### Giai đoạn 2: MVC Refactoring
+- ✅ Server khởi động với MVC structure (`npm start`)
+- ✅ Health endpoint: `GET /health` ✅
+- ✅ DID endpoint: `GET /api/did/:address` ✅
+- ✅ Auth routes: `/api/auth/register`, `/api/auth/login` (structured)
+- ✅ Admin routes: `/api/admin/logs` (with audit middleware)
+- ✅ Backward compatibility: `/api/register`, `/api/login`, `/api/logs` ✅
+- ✅ All routes properly import controllers
+- ✅ app.locals sharing (pool, provider, contract) works
+
+### Giai đoạn 1: Folder Restructure
 - ✅ Server khởi động thành công (`npm start`)
 - ✅ Health endpoint hoạt động (`GET /health`)
 - ✅ Migration script hoạt động (`npm run migrate`)
@@ -97,6 +153,35 @@ npm run test:validation # Test Zod validation
 - ✅ Tất cả imports đã được cập nhật đúng path
 
 ## 🎯 Lợi ích
+
+### MVC Refactoring (Giai đoạn 2)
+
+#### 1. **Separation of Concerns**
+- Routes: Chỉ định nghĩa endpoints và middleware
+- Controllers: Chứa business logic
+- server.js: Chỉ setup và mount routes (từ 304 lines → 140 lines)
+
+#### 2. **Maintainability**
+- Thêm endpoint mới: Tạo method trong controller, add route trong routes file
+- Debug dễ hơn: Biết chính xác file nào chứa logic
+- Testing dễ hơn: Test controllers riêng, test routes riêng
+
+#### 3. **Scalability**
+- Thêm controller mới → `src/controllers/newController.js`
+- Thêm route mới → `src/routes/newRoutes.js`
+- Mount vào server.js: `app.use('/api/new', newRoutes)`
+
+#### 4. **Reusability**
+- Controllers có thể được reuse ở nhiều routes
+- Middleware được share qua app.locals (pool, provider, contract)
+- DRY principle
+
+#### 5. **Team Collaboration**
+- Developer A làm didController, Developer B làm authController
+- Ít conflict trong git
+- Clear ownership
+
+### Folder Restructure (Giai đoạn 1)
 
 ### 1. **Tổ chức rõ ràng**
 - Source code trong `src/`
@@ -133,25 +218,27 @@ Chi tiết xem:
 
 ## 🚀 Next Steps (Optional)
 
-Có thể nâng cấp thêm:
-
-1. **Thêm routes/**: Tách routes ra khỏi server.js
+### Đã hoàn thành ✅
+1. ✅ **Thêm routes/**: Đã tách routes ra khỏi server.js
    ```
    src/routes/
-   ├── health.js
-   ├── did.js
-   ├── auth.js
-   └── admin.js
+   ├── health.routes.js
+   ├── did.routes.js
+   ├── auth.routes.js
+   └── admin.routes.js
    ```
 
-2. **Thêm controllers/**: Business logic riêng
+2. ✅ **Thêm controllers/**: Business logic riêng
    ```
    src/controllers/
-   ├── didController.js
-   └── authController.js
+   ├── did.controller.js
+   ├── auth.controller.js
+   └── admin.controller.js
    ```
 
-3. **Thêm models/**: Database models
+### Có thể làm thêm (Future)
+
+3. **Thêm models/**: Database models (ORM pattern)
    ```
    src/models/
    ├── User.js
@@ -162,6 +249,20 @@ Có thể nâng cấp thêm:
    ```bash
    npm install --save-dev nodemon
    # package.json: "dev": "nodemon src/server.js"
+   ```
+
+5. **Unit tests**: Test riêng từng controller
+   ```
+   tests/unit/
+   ├── did.controller.test.js
+   ├── auth.controller.test.js
+   └── admin.controller.test.js
+   ```
+
+6. **API versioning**: Cho phép multiple API versions
+   ```
+   src/routes/v1/
+   src/routes/v2/
    ```
 
 ---
