@@ -22,7 +22,7 @@ app.use(helmet());
 const corsOptions = {
   origin: process.env.CORS_ORIGINS 
     ? process.env.CORS_ORIGINS.split(',') 
-    : ['http://localhost:3000', 'http://localhost:3001'],
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
   credentials: true,
   optionsSuccessStatus: 200
 };

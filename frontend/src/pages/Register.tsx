@@ -14,6 +14,7 @@ import { Wallet } from 'ethers';
 import { useSnackbar } from 'notistack';
 import { registerDID } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
+import { parseQRData } from '../utils/qr-parser';
 
 export default function Register() {
   const [qrData, setQrData] = useState('');
@@ -21,7 +22,7 @@ export default function Register() {
   const [showPrivateKeyWarning, setShowPrivateKeyWarning] = useState(false);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { setUser, setToken, setPrivateKey } = useAuthStore();
+  const { setUser, setToken, setPrivateKey, setCCCDInfo } = useAuthStore();
 
   const handleRegister = async () => {
     if (!qrData.trim()) {
@@ -31,12 +32,23 @@ export default function Register() {
 
     setLoading(true);
     try {
+      // Parse QR data để lấy thông tin CCCD
+      const cccdInfo = parseQRData(qrData);
+      if (!cccdInfo) {
+        enqueueSnackbar('QR data không hợp lệ. Vui lòng kiểm tra lại.', {
+          variant: 'error',
+        });
+        setLoading(false);
+        return;
+      }
+
       // Generate random wallet
       const wallet = Wallet.createRandom();
       const privateKey = wallet.privateKey;
       const address = wallet.address;
 
       console.log('Generated wallet:', { address, privateKey });
+      console.log('Parsed CCCD info:', cccdInfo);
 
       // Call API register
       const response = await registerDID({ qrData, privateKey });
@@ -48,6 +60,7 @@ export default function Register() {
       });
       setToken(response.data.token);
       setPrivateKey(privateKey); // CHỈ DÙNG CHO DEMO
+      setCCCDInfo(cccdInfo); // Lưu thông tin CCCD đã parse
 
       setShowPrivateKeyWarning(true);
 

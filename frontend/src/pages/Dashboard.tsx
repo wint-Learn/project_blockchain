@@ -127,6 +127,41 @@ export default function Dashboard() {
                 {new Date(didInfo.createdAt).toLocaleString('vi-VN')}
               </Typography>
 
+              {/* Hiển thị thông tin CCCD nếu có */}
+              {user?.cccdInfo && (
+                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    📋 Thông tin CCCD
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <strong>Số CCCD:</strong> {user.cccdInfo.cccdNumber}
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <strong>Họ và tên:</strong> {user.cccdInfo.fullName}
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <strong>Ngày sinh:</strong> {user.cccdInfo.dateOfBirth}
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <strong>Giới tính:</strong> {user.cccdInfo.gender}
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <strong>Địa chỉ:</strong> {user.cccdInfo.address}
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    <strong>Ngày cấp:</strong> {user.cccdInfo.issueDate}
+                  </Typography>
+                  {user.cccdInfo.oldNumber && (
+                    <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">
+                      <strong>Số CMND cũ:</strong> {user.cccdInfo.oldNumber}
+                    </Typography>
+                  )}
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    <strong>Lưu ý:</strong> Thông tin này chỉ hiển thị trong session hiện tại và không được lưu trữ lâu dài.
+                  </Alert>
+                </Box>
+              )}
+
               {didInfo.onChain && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body1">

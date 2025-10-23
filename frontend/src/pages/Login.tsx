@@ -14,6 +14,7 @@ import { Wallet } from 'ethers';
 import { useSnackbar } from 'notistack';
 import { loginDID } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
+import { parseQRData } from '../utils/qr-parser';
 
 export default function Login() {
   const [address, setAddress] = useState('');
@@ -22,7 +23,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { setUser, setToken, setPrivateKey } = useAuthStore();
+  const { setUser, setToken, setPrivateKey, setCCCDInfo } = useAuthStore();
 
   const handleLogin = async () => {
     if (!address.trim() || !qrData.trim() || !privateKey.trim()) {
@@ -32,6 +33,16 @@ export default function Login() {
 
     setLoading(true);
     try {
+      // Parse QR data để lấy thông tin CCCD
+      const cccdInfo = parseQRData(qrData);
+      if (!cccdInfo) {
+        enqueueSnackbar('QR data không hợp lệ. Vui lòng kiểm tra lại.', {
+          variant: 'error',
+        });
+        setLoading(false);
+        return;
+      }
+
       // Tạo wallet từ private key
       const wallet = new Wallet(privateKey);
 
@@ -63,6 +74,7 @@ export default function Login() {
       });
       setToken(response.data.token);
       setPrivateKey(privateKey); // CHỈ DÙNG CHO DEMO
+      setCCCDInfo(cccdInfo); // Lưu thông tin CCCD đã parse
 
       enqueueSnackbar('Đăng nhập thành công!', { variant: 'success' });
 
