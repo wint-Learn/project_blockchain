@@ -1,9 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Container, Box, Typography, Button, Paper } from '@mui/material';
-import { AccountBalanceWallet, Login, AppRegistration } from '@mui/icons-material';
+import { AccountBalanceWallet, Login, AppRegistration, Dashboard } from '@mui/icons-material';
+import { useAuthStore } from '../store/useAuthStore';
 
 export default function Home() {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
 
   return (
     <Container maxWidth="md">
@@ -20,25 +22,41 @@ export default function Home() {
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 4 }}>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<AppRegistration />}
-              onClick={() => navigate('/register')}
-              sx={{ px: 4, py: 1.5 }}
-            >
-              Đăng ký
-            </Button>
-            
-            <Button
-              variant="outlined"
-              size="large"
-              startIcon={<Login />}
-              onClick={() => navigate('/login')}
-              sx={{ px: 4, py: 1.5 }}
-            >
-              Đăng nhập
-            </Button>
+            {user ? (
+              // Nếu đã đăng nhập, hiển thị nút Dashboard
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<Dashboard />}
+                onClick={() => navigate('/dashboard')}
+                sx={{ px: 4, py: 1.5 }}
+              >
+                Vào Dashboard
+              </Button>
+            ) : (
+              // Nếu chưa đăng nhập, hiển thị nút Đăng ký/Đăng nhập
+              <>
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<AppRegistration />}
+                  onClick={() => navigate('/register')}
+                  sx={{ px: 4, py: 1.5 }}
+                >
+                  Đăng ký
+                </Button>
+                
+                <Button
+                  variant="outlined"
+                  size="large"
+                  startIcon={<Login />}
+                  onClick={() => navigate('/login')}
+                  sx={{ px: 4, py: 1.5 }}
+                >
+                  Đăng nhập
+                </Button>
+              </>
+            )}
           </Box>
 
           <Box sx={{ mt: 4, p: 3, bgcolor: 'background.default', borderRadius: 2 }}>

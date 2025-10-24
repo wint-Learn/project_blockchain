@@ -45,15 +45,34 @@ function decrypt(text) {
 }
 
 /**
- * Hash CCCD data (để lưu on-chain)
- * @param {object} cccdData - {cccd_number, name, dob, ...}
- * @returns {string} - Keccak256 hash
+ * Extract CCCD number from QR data
+ * @param {string} qrData - Raw QR data: "cccd_number|old_number||name|dob|gender|address|issue_date"
+ * @returns {string} - CCCD number (field đầu tiên)
  */
-function hashCCCD(cccdData) {
-  const ethers = require('ethers');
-  // Chuẩn hóa data trước khi hash
-  const normalized = JSON.stringify(cccdData, Object.keys(cccdData).sort());
-  return ethers.keccak256(ethers.toUtf8Bytes(normalized));
+function extractCCCDNumber(qrData) {
+  const fields = qrData.split('|');
+  return fields[0] || '';
 }
 
-module.exports = { encrypt, decrypt, hashCCCD };
+/**
+ * Hash CCCD number only (để check duplicate)
+ * @param {string} cccdNumber - CCCD number
+ * @returns {string} - Keccak256 hash of CCCD number
+ */
+function hashCCCDNumber(cccdNumber) {
+  const ethers = require('ethers');
+  return ethers.keccak256(ethers.toUtf8Bytes(cccdNumber));
+}
+
+/**
+ * Hash full QR data (để lưu on-chain - có thể update khi thông tin thay đổi)
+ * @param {string} qrData - Raw QR data string from CCCD
+ * @returns {string} - Keccak256 hash
+ */
+function hashCCCD(qrData) {
+  const ethers = require('ethers');
+  // Hash raw QR data string directly
+  return ethers.keccak256(ethers.toUtf8Bytes(qrData));
+}
+
+module.exports = { encrypt, decrypt, hashCCCD, hashCCCDNumber, extractCCCDNumber };

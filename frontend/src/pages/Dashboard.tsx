@@ -22,12 +22,10 @@ import Loading from '../components/Loading';
 
 interface DIDInfo {
   address: string;
-  cccdHash: string;
-  createdAt: string;
-  onChain?: {
-    exists: boolean;
-    owner?: string;
-  };
+  publicKey: string;
+  cccdHashOnChain: string;
+  hasMetadata: boolean;
+  registeredAt: string;
 }
 
 interface LogEntry {
@@ -47,11 +45,15 @@ export default function Dashboard() {
   const { user, logout } = useAuthStore();
 
   useEffect(() => {
+    console.log('[Dashboard] useEffect triggered, user:', user);
+    
     if (!user?.address) {
+      console.log('[Dashboard] No user address, redirecting to /login');
       navigate('/login');
       return;
     }
 
+    console.log('[Dashboard] Fetching data for address:', user.address);
     fetchData();
   }, [user]);
 
@@ -120,11 +122,15 @@ export default function Dashboard() {
                 <strong>Địa chỉ ví:</strong> {didInfo.address}
               </Typography>
               <Typography variant="body1" sx={{ mt: 1 }}>
-                <strong>CCCD Hash:</strong> {didInfo.cccdHash}
+                <strong>CCCD Hash:</strong> {didInfo.cccdHashOnChain}
+              </Typography>
+              <Typography variant="body1" sx={{ mt: 1 }}>
+                <strong>Public Key:</strong>{' '}
+                {didInfo.publicKey.slice(0, 20)}...{didInfo.publicKey.slice(-20)}
               </Typography>
               <Typography variant="body1" sx={{ mt: 1 }}>
                 <strong>Ngày tạo:</strong>{' '}
-                {new Date(didInfo.createdAt).toLocaleString('vi-VN')}
+                {new Date(didInfo.registeredAt).toLocaleString('vi-VN')}
               </Typography>
 
               {/* Hiển thị thông tin CCCD nếu có */}
@@ -162,21 +168,12 @@ export default function Dashboard() {
                 </Box>
               )}
 
-              {didInfo.onChain && (
+              {didInfo.hasMetadata && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body1">
                     <strong>Trạng thái Blockchain:</strong>{' '}
-                    {didInfo.onChain.exists ? (
-                      <Chip label="Đã đăng ký" color="success" size="small" />
-                    ) : (
-                      <Chip label="Chưa đăng ký" color="warning" size="small" />
-                    )}
+                    <Chip label="Đã đăng ký on-chain" color="success" size="small" />
                   </Typography>
-                  {didInfo.onChain.owner && (
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      Owner: {didInfo.onChain.owner}
-                    </Typography>
-                  )}
                 </Box>
               )}
 
@@ -232,9 +229,9 @@ export default function Dashboard() {
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={log.anomaly_score.toFixed(2)}
+                          label={(log.anomaly_score ?? 0).toFixed(2)}
                           color={
-                            log.anomaly_score > 0.5 ? 'error' : 'success'
+                            (log.anomaly_score ?? 0) > 0.5 ? 'error' : 'success'
                           }
                           size="small"
                         />

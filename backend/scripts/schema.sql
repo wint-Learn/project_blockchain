@@ -4,7 +4,8 @@
 CREATE TABLE IF NOT EXISTS users (
   id SERIAL PRIMARY KEY,
   wallet_address TEXT UNIQUE NOT NULL,           -- Địa chỉ Ethereum (unique ID)
-  cccd_hash TEXT NOT NULL,                       -- Hash của CCCD (match với on-chain)
+  cccd_hash TEXT NOT NULL,                       -- Hash của full QR data (match với on-chain)
+  cccd_number_hash TEXT UNIQUE NOT NULL,         -- Hash của SỐ CCCD only (để check duplicate)
   
   -- Encrypted metadata (dùng pgcrypto hoặc encrypt ở app layer)
   encrypted_cccd_data TEXT,                      -- Raw CCCD fields encrypted (JSON string)
@@ -52,6 +53,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 -- Index để query nhanh
 CREATE INDEX IF NOT EXISTS idx_users_wallet ON users(wallet_address);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_cccd_number_hash ON users(cccd_number_hash); -- Đảm bảo SỐ CCCD unique
+CREATE INDEX IF NOT EXISTS idx_users_cccd_hash ON users(cccd_hash); -- Index cho full hash (không unique - có thể update)
 CREATE INDEX IF NOT EXISTS idx_logs_wallet ON login_logs(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON login_logs(timestamp);
 CREATE INDEX IF NOT EXISTS idx_logs_anomaly ON login_logs(is_anomaly);

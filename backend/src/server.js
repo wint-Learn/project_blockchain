@@ -22,11 +22,19 @@ app.use(helmet());
 const corsOptions = {
   origin: process.env.CORS_ORIGINS 
     ? process.env.CORS_ORIGINS.split(',') 
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'],
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 app.use(cors(corsOptions));
+
+// Debug middleware - log tất cả requests
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url} - Origin: ${req.headers.origin || 'N/A'}`);
+  next();
+});
 
 // Rate limiting
 const limiter = rateLimit({
@@ -50,7 +58,13 @@ pool.connect()
   .catch(err => logger.error('PostgreSQL connection error:', err));
 
 // Blockchain setup
-const provider = new ethers.JsonRpcProvider(process.env.POLYGON_RPC_URL);
+// Use Ganache for development, Polygon for production
+const rpcUrl = process.env.NODE_ENV === 'production' 
+  ? process.env.POLYGON_RPC_URL 
+  : (process.env.LOCAL_RPC_URL || process.env.POLYGON_RPC_URL);
+
+logger.info(`Using RPC: ${rpcUrl}`);
+const provider = new ethers.JsonRpcProvider(rpcUrl);
 const contractAddress = process.env.CONTRACT_ADDRESS;
 
 let abi;
@@ -138,7 +152,7 @@ app.use((err, req, res, next) => {
 
 // ============ START SERVER ============
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
   logger.info(`Backend running on port ${port}`);
   logger.info('📍 Routes:');
   logger.info('   GET  /health');

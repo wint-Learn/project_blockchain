@@ -52,10 +52,10 @@ export const useAuthStore = create<AuthState>()(
           address: state.user.address,
           cccdHash: state.user.cccdHash,
           anomalyScore: state.user.anomalyScore,
-          // KHÔNG persist cccdInfo để tăng bảo mật
+          cccdInfo: state.user.cccdInfo, // PERSIST cccdInfo để hiển thị trên Dashboard
         } : null,
         token: state.token,
-        // Không persist privateKey để tăng bảo mật
+        privateKey: state.privateKey, // Persist để có thể sign messages (demo only)
       }),
     }
   )

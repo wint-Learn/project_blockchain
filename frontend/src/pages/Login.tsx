@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -17,16 +17,22 @@ import { useAuthStore } from '../store/useAuthStore';
 import { parseQRData } from '../utils/qr-parser';
 
 export default function Login() {
-  const [address, setAddress] = useState('');
   const [qrData, setQrData] = useState('');
   const [privateKey, setPrivateKeyInput] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { setUser, setToken, setPrivateKey, setCCCDInfo } = useAuthStore();
+  const { user, setUser, setToken, setPrivateKey, setCCCDInfo } = useAuthStore();
+
+  // Redirect nếu đã đăng nhập
+  useEffect(() => {
+    if (user?.address) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleLogin = async () => {
-    if (!address.trim() || !qrData.trim() || !privateKey.trim()) {
+    if (!qrData.trim() || !privateKey.trim()) {
       enqueueSnackbar('Vui lòng điền đầy đủ thông tin', { variant: 'warning' });
       return;
     }
@@ -43,13 +49,11 @@ export default function Login() {
         return;
       }
 
-      // Tạo wallet từ private key
+      // Tạo wallet từ private key để lấy address
       const wallet = new Wallet(privateKey);
+      const address = wallet.address;
 
-      // Kiểm tra address khớp
-      if (wallet.address.toLowerCase() !== address.toLowerCase()) {
-        throw new Error('Private key không khớp với address');
-      }
+      console.log('Derived address from private key:', address);
 
       // Generate message để sign
       const message = `Login at ${Date.now()}`;
@@ -101,23 +105,13 @@ export default function Login() {
           </Typography>
 
           <Alert severity="info" sx={{ mb: 2 }}>
-            Nhập địa chỉ ví, QR data và private key để đăng nhập
+            Nhập QR data (CCCD) và Private Key để đăng nhập
           </Alert>
 
           <TextField
             fullWidth
-            label="Địa chỉ ví (Address)"
-            placeholder="0x..."
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            margin="normal"
-            disabled={loading}
-          />
-
-          <TextField
-            fullWidth
             label="QR Data (từ CCCD)"
-            placeholder="Nhập dữ liệu QR từ CCCD"
+            placeholder="Nhập dữ liệu QR từ CCCD (cùng QR đã dùng khi đăng ký)"
             value={qrData}
             onChange={(e) => setQrData(e.target.value)}
             margin="normal"

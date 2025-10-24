@@ -26,7 +26,7 @@ const cccdDataSchema = z.object({
  * NOTE: privateKey sẽ được loại bỏ trong tương lai (client-side signing)
  */
 const registerSchema = z.object({
-  cccdData: cccdDataSchema,
+  qrData: z.string().min(1, 'QR data is required'), // Accept raw QR string
   // privateKey tạm thời cho demo, sẽ được thay bằng signed transaction
   privateKey: z.string()
     .regex(/^0x[a-fA-F0-9]{64}$/, 'Private key must be 32-byte hex string with 0x prefix')
@@ -39,7 +39,7 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   address: z.string()
     .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address'),
-  cccdData: cccdDataSchema,
+  qrData: z.string().min(1, 'QR data is required'), // Accept raw QR string
   message: z.string()
     .min(1, 'Message is required'),
   signature: z.string()

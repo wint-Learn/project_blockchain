@@ -6,6 +6,9 @@ pragma solidity ^0.8.0;
 /// @title DID Registry
 /// @notice Minimal registry to store a user's public key and CCCD hash (Vietnam) and verify signatures
 contract DIDRegistry {
+    /// @notice Maps a CCCD hash to the user's address
+    mapping(string => address) public cccdToAddress;
+    
     /// @notice Maps a user address to their public key bytes
     mapping(address => bytes) public publicKeys;
 
@@ -17,14 +20,18 @@ contract DIDRegistry {
     /// @param cccdHash Hash of the user's CCCD stored as an anchor
     event DIDCreated(address indexed user, string cccdHash);
 
-    /// @notice Create a DID for sender by storing their public key and CCCD hash
-    /// @param _cccdHash Hash of the sender's CCCD (off-chain anchor)
-    /// @param _publicKey The sender's public key bytes (e.g., compressed/uncompressed key)
-    function createDID(string memory _cccdHash, bytes memory _publicKey) public {
-        require(publicKeys[msg.sender].length == 0, "DID already exists");
-        publicKeys[msg.sender] = _publicKey;
-        cccdHashes[msg.sender] = _cccdHash;
-        emit DIDCreated(msg.sender, _cccdHash);
+    /// @notice Create a DID for a user address by storing their public key and CCCD hash
+    /// @param _cccdHash Hash of the user's CCCD (off-chain anchor)
+    /// @param _publicKey The user's public key bytes (e.g., compressed/uncompressed key)
+    /// @param _userAddress The address of the user (not msg.sender, allows gas sponsorship)
+    function createDID(string memory _cccdHash, bytes memory _publicKey, address _userAddress) public {
+        require(cccdToAddress[_cccdHash] == address(0), "CCCD already registered");
+        require(publicKeys[_userAddress].length == 0, "Address already has DID");
+        
+        cccdToAddress[_cccdHash] = _userAddress;
+        publicKeys[_userAddress] = _publicKey;
+        cccdHashes[_userAddress] = _cccdHash;
+        emit DIDCreated(_userAddress, _cccdHash);
     }
 
     /// @notice Verify an Ethereum signed message against a user's address

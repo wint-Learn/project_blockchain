@@ -22,6 +22,13 @@ const config: HardhatUserConfig = {
       chainId: 31337,
     },
     
+    // Ganache local (for development with persistent DB)
+    ganache: {
+      url: "http://127.0.0.1:8545",
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      chainId: 1337,
+    },
+    
     // Polygon Amoy Testnet
     polygonAmoy: {
       url: `https://polygon-amoy.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}`,
