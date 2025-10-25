@@ -14,15 +14,17 @@ exports.register = async (req, res) => {
   const { pool, contract, provider, logger } = req.app.locals;
   
   try {
-    const { qrData, privateKey } = req.body;
+    const { qrData, privateKey, verificationToken } = req.body;
     
     logger.info('Registration attempt started', { 
-      qrDataPreview: qrData.slice(0, 20) + '...'
+      qrDataPreview: qrData.slice(0, 20) + '...',
+      withPreVerification: !!verificationToken
     });
     
     const result = await registerDID({
       qrData,
       privateKey,
+      verificationToken,
       pool,
       contract,
       provider,
@@ -33,13 +35,14 @@ exports.register = async (req, res) => {
   } catch (error) {
     logger.error('Registration failed', {
       error: error.message,
+      code: error.code,
       stack: error.stack,
       qrDataPreview: req.body.qrData?.slice(0, 20) + '...'
     });
     
-    // Handle specific error codes
-    if (error.code === 'CCCD_ALREADY_EXISTS') {
-      return res.status(error.statusCode || 409).json({ 
+    // Handle specific error codes with proper status codes
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ 
         error: error.message,
         code: error.code,
         existingAddress: error.existingAddress

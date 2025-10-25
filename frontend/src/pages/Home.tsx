@@ -1,6 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { Container, Box, Typography, Button, Paper } from '@mui/material';
-import { AccountBalanceWallet, Login, AppRegistration, Dashboard } from '@mui/icons-material';
+import { 
+  AccountBalanceWallet, 
+  Login, 
+  Dashboard,
+  VerifiedUser 
+} from '@mui/icons-material';
 import { useAuthStore } from '../store/useAuthStore';
 
 export default function Home() {
@@ -34,16 +39,16 @@ export default function Home() {
                 Vào Dashboard
               </Button>
             ) : (
-              // Nếu chưa đăng nhập, hiển thị nút Đăng ký/Đăng nhập
+              // Nếu chưa đăng nhập, hiển thị nút Xác thực/Đăng nhập
               <>
                 <Button
                   variant="contained"
                   size="large"
-                  startIcon={<AppRegistration />}
-                  onClick={() => navigate('/register')}
+                  startIcon={<VerifiedUser />}
+                  onClick={() => navigate('/verify')}
                   sx={{ px: 4, py: 1.5 }}
                 >
-                  Đăng ký
+                  Xác thực & Đăng ký
                 </Button>
                 
                 <Button

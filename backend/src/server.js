@@ -55,7 +55,10 @@ app.use(bodyParser.json());
 const pool = new Pool({ connectionString: process.env.DB_CONNECTION_STRING });
 pool.connect()
   .then(() => logger.info('Connected to PostgreSQL'))
-  .catch(err => logger.error('PostgreSQL connection error:', err));
+  .catch(err => {
+    logger.error('PostgreSQL connection error:', err);
+    // Continue running - some endpoints don't need DB
+  });
 
 // Blockchain setup
 // Use Ganache for development, Polygon for production
@@ -64,27 +67,43 @@ const rpcUrl = process.env.NODE_ENV === 'production'
   : (process.env.LOCAL_RPC_URL || process.env.POLYGON_RPC_URL);
 
 logger.info(`Using RPC: ${rpcUrl}`);
-const provider = new ethers.JsonRpcProvider(rpcUrl);
-const contractAddress = process.env.CONTRACT_ADDRESS;
 
-let abi;
-const DID_JSON_PATH = path.resolve(__dirname, '../../blockchain/artifacts/contracts/DIDRegistry.sol/DIDRegistry.json');
+let provider, contract;
 try {
-  if (fs.existsSync(DID_JSON_PATH)) {
-    abi = require(DID_JSON_PATH).abi;
-  } else {
-    throw new Error('ABI not found');
-  }
-} catch (_e) {
-  abi = [
-    'function createDID(string _cccdHash, bytes _publicKey) public',
-    'function verifySignature(address user, bytes32 messageHash, bytes signature) public pure returns (bool)',
-    'function publicKeys(address) view returns (bytes)',
-    'function cccdHashes(address) view returns (string)'
-  ];
-}
+  provider = new ethers.JsonRpcProvider(rpcUrl);
+  const contractAddress = process.env.CONTRACT_ADDRESS;
 
-const contract = new ethers.Contract(contractAddress, abi, provider);
+  if (!contractAddress) {
+    throw new Error('CONTRACT_ADDRESS not set in .env');
+  }
+
+  let abi;
+  const DID_JSON_PATH = path.resolve(__dirname, '../../blockchain/artifacts/contracts/DIDRegistry.sol/DIDRegistry.json');
+  try {
+    if (fs.existsSync(DID_JSON_PATH)) {
+      abi = require(DID_JSON_PATH).abi;
+      logger.info('Loaded ABI from JSON file');
+    } else {
+      throw new Error('ABI not found');
+    }
+  } catch (_e) {
+    logger.warn('Using fallback ABI');
+    abi = [
+      'function createDID(string _cccdHash, bytes _publicKey) public',
+      'function verifySignature(address user, bytes32 messageHash, bytes signature) public pure returns (bool)',
+      'function publicKeys(address) view returns (bytes)',
+      'function cccdHashes(address) view returns (string)'
+    ];
+  }
+
+  contract = new ethers.Contract(contractAddress, abi, provider);
+  logger.info('Blockchain connection established', { contractAddress });
+} catch (error) {
+  logger.error('Blockchain setup error:', error.message);
+  // Set dummy values to prevent crashes
+  provider = null;
+  contract = null;
+}
 
 // Store dependencies in app.locals để routes/controllers có thể access
 app.locals.pool = pool;
@@ -94,16 +113,28 @@ app.locals.logger = logger;
 
 // ============ ROUTES ============
 
-const healthRoutes = require('./routes/health.routes');
-const didRoutes = require('./routes/did.routes');
-const authRoutes = require('./routes/auth.routes');
-const adminRoutes = require('./routes/admin.routes');
+let healthRoutes, didRoutes, authRoutes, adminRoutes, verifyRoutes, serviceRoutes;
+try {
+  healthRoutes = require('./routes/health.routes');
+  didRoutes = require('./routes/did.routes');
+  authRoutes = require('./routes/auth.routes');
+  adminRoutes = require('./routes/admin.routes');
+  verifyRoutes = require('./routes/verify.routes');
+  serviceRoutes = require('./routes/service.routes');
+  logger.info('All routes loaded successfully');
+} catch (error) {
+  logger.error('Error loading routes:', error.message);
+  logger.error('Stack:', error.stack);
+  process.exit(1);
+}
 
 // Mount routes
 app.use('/health', healthRoutes);
 app.use('/api/did', didRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/verify', verifyRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Backward compatibility
 const authController = require('./controllers/auth.controller');

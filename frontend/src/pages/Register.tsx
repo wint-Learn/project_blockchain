@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -25,8 +25,14 @@ export default function Register() {
     privateKey: string;
   } | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { enqueueSnackbar } = useSnackbar();
   const { user, setUser, setPrivateKey } = useAuthStore();
+
+  // Get verification token from navigation state
+  const verificationToken = location.state?.verificationToken;
+  const verifiedCCCD = location.state?.cccdNumber;
+  const verifiedPhone = location.state?.phoneNumber;
 
   // Redirect nếu đã đăng nhập
   useEffect(() => {
@@ -34,6 +40,24 @@ export default function Register() {
       navigate('/dashboard', { replace: true });
     }
   }, [user, navigate]);
+
+  // Check if user has verification token (for pre-verified registration)
+  useEffect(() => {
+    if (!verificationToken) {
+      enqueueSnackbar(
+        'Bạn cần xác thực CCCD trước khi đăng ký. Chuyển đến trang xác thực...',
+        { variant: 'warning', autoHideDuration: 3000 }
+      );
+      setTimeout(() => {
+        navigate('/verify');
+      }, 2000);
+    } else {
+      enqueueSnackbar(
+        `✅ Đã xác thực CCCD: ${verifiedCCCD} | SĐT: ${verifiedPhone}`,
+        { variant: 'success', autoHideDuration: 5000 }
+      );
+    }
+  }, [verificationToken, verifiedCCCD, verifiedPhone, navigate, enqueueSnackbar]);
 
   const handleRegister = async () => {
     if (!qrData.trim()) {
@@ -62,7 +86,11 @@ export default function Register() {
       console.log('Parsed CCCD info:', cccdInfo);
 
       // Call API register
-      const response = await registerDID({ qrData, privateKey });
+      const response = await registerDID({ 
+        qrData, 
+        privateKey,
+        verificationToken // Pass verification token to backend
+      });
 
       console.log('Register response:', response.data);
 
@@ -126,6 +154,17 @@ export default function Register() {
           <Typography variant="h4" component="h1" gutterBottom align="center">
             Đăng ký DID
           </Typography>
+
+          {verificationToken && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                ✅ <strong>Đã xác thực CCCD:</strong> {verifiedCCCD}
+              </Typography>
+              <Typography variant="body2">
+                📱 <strong>Số điện thoại:</strong> {verifiedPhone}
+              </Typography>
+            </Alert>
+          )}
 
           {generatedCredentials && (
             <Alert severity="success" sx={{ mb: 2 }}>

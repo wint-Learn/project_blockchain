@@ -21,6 +21,7 @@ api.interceptors.request.use((config) => {
 export const registerDID = async (data: {
   qrData: string;
   privateKey: string;
+  verificationToken?: string;
 }) => {
   return api.post('/auth/register', data);
 };
@@ -40,6 +41,107 @@ export const getDIDInfo = async (address: string) => {
 
 export const getLogs = async (params?: { limit?: number; offset?: number }) => {
   return api.get('/admin/logs', { params });
+};
+
+// Verification APIs
+export const requestOTP = async (data: {
+  cccdNumber: string;
+  phoneNumber: string;
+}) => {
+  return api.post('/verify/request-otp', data);
+};
+
+export const verifyOTP = async (data: {
+  cccdNumber: string;
+  otp: string;
+}) => {
+  return api.post('/verify/confirm-otp', data);
+};
+
+export const checkVerificationStatus = async (cccdNumber: string) => {
+  return api.get(`/verify/status/${cccdNumber}`);
+};
+
+// Admin APIs
+export const adminLogin = async (data: {
+  username: string;
+  password: string;
+}) => {
+  return api.post('/admin/login', data);
+};
+
+export const getDashboardStats = async () => {
+  return api.get('/admin/stats');
+};
+
+export const importCCCDBatch = async (csvData: string) => {
+  return api.post('/admin/cccd/import', { csvData });
+};
+
+export const getPreVerifiedList = async (params?: {
+  status?: string;
+  phone?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  return api.get('/admin/cccd/list', { params });
+};
+
+export const blacklistCCCD = async (id: number, reason: string) => {
+  return api.put(`/admin/cccd/${id}/blacklist`, { reason });
+};
+
+export const exportLogs = async (params?: {
+  startDate?: string;
+  endDate?: string;
+}) => {
+  return api.get('/admin/logs/export', { 
+    params,
+    responseType: 'blob' // For CSV download
+  });
+};
+
+// Service Management APIs (Admin)
+export const getServiceRequests = async (params?: {
+  status?: string;
+  serviceId?: number;
+  limit?: number;
+  offset?: number;
+}) => {
+  return api.get('/services/admin/requests', { params });
+};
+
+export const approveServiceRequest = async (requestId: number, adminNotes?: string) => {
+  return api.put(`/services/admin/requests/${requestId}/approve`, { adminNotes });
+};
+
+export const rejectServiceRequest = async (requestId: number, reason: string) => {
+  return api.put(`/services/admin/requests/${requestId}/reject`, { reason });
+};
+
+export const createService = async (data: {
+  name: string;
+  description: string;
+  category: string;
+  requiredDocuments?: string;
+}) => {
+  return api.post('/services/admin/create', data);
+};
+
+// Service APIs (User)
+export const listServices = async (category?: string) => {
+  return api.get('/services', { params: { category } });
+};
+
+export const requestService = async (serviceId: number, data: {
+  userAddress: string;
+  requestData: any;
+}) => {
+  return api.post(`/services/${serviceId}/request`, data);
+};
+
+export const getMyServices = async (userAddress: string) => {
+  return api.get('/services/my-services', { params: { userAddress } });
 };
 
 export default api;
