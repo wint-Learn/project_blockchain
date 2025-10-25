@@ -105,9 +105,17 @@ export default function Dashboard() {
           <Typography variant="h4" component="h1">
             Dashboard
           </Typography>
-          <Button variant="outlined" color="error" onClick={handleLogout}>
-            Đăng xuất
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button variant="contained" onClick={() => navigate('/services')}>
+              Dịch vụ công
+            </Button>
+            <Button variant="outlined" onClick={() => navigate('/my-services')}>
+              Dịch vụ của tôi
+            </Button>
+            <Button variant="outlined" color="error" onClick={handleLogout}>
+              Đăng xuất
+            </Button>
+          </Box>
         </Box>
 
         {/* DID Info Section */}

@@ -12,7 +12,6 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import {
   Description,
   AccountBalance,
@@ -114,9 +113,9 @@ const Services = () => {
       {services.length === 0 ? (
         <Alert severity="info">Hiện tại chưa có dịch vụ nào</Alert>
       ) : (
-        <Grid container spacing={3}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           {services.map((service) => (
-            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={service.id}>
+            <Box key={service.id} sx={{ flex: '1 1 calc(33.333% - 24px)', minWidth: 300 }}>
               <Card
                 sx={{
                   height: '100%',
@@ -186,9 +185,9 @@ const Services = () => {
                   </Button>
                 </CardActions>
               </Card>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
       )}
 
       <Box sx={{ mt: 4, textAlign: 'center' }}>

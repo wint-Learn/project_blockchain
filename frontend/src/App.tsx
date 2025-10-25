@@ -6,6 +6,9 @@ import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Verify from './pages/Verify';
+import Services from './pages/Services';
+import ServiceRequest from './pages/ServiceRequest';
+import MyServices from './pages/MyServices';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import PrivateRoute from './components/PrivateRoute';
@@ -45,6 +48,18 @@ function App() {
               element={
                 <PrivateRoute>
                   <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            
+            {/* Service Routes */}
+            <Route path="/services" element={<Services />} />
+            <Route path="/services/:serviceId/request" element={<ServiceRequest />} />
+            <Route
+              path="/my-services"
+              element={
+                <PrivateRoute>
+                  <MyServices />
                 </PrivateRoute>
               }
             />
