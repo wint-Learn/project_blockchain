@@ -18,6 +18,32 @@ api.interceptors.request.use((config) => {
 });
 
 // API calls
+// Auth APIs - MetaMask-based
+export const registerWithMetaMask = async (data: {
+  cccdNumber: string;
+  fullName: string;
+  dateOfBirth: string;
+  gender: string;
+  address: string;
+  issueDate: string;
+  phoneNumber: string;
+  verificationToken?: string;
+}) => {
+  return api.post('/auth/register', data);
+};
+
+export const getLoginMessage = async (address: string) => {
+  return api.post('/auth/get-message', { address });
+};
+
+export const loginWithMetaMask = async (data: {
+  address: string;
+  signature: string;
+}) => {
+  return api.post('/auth/login', data);
+};
+
+// Legacy APIs (for backward compatibility)
 export const registerDID = async (data: {
   qrData: string;
   privateKey: string;

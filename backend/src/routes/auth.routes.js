@@ -21,9 +21,16 @@ router.post('/register', authLimiter, validateRequest(registerSchema), authContr
 
 /**
  * @route   POST /api/auth/login
- * @desc    Login với signature verification
+ * @desc    Login với MetaMask signature
  * @access  Public (nhưng có rate limit)
  */
-router.post('/login', authLimiter, validateRequest(loginSchema), authController.login);
+router.post('/login', authLimiter, authController.login);
+
+/**
+ * @route   POST /api/auth/get-message
+ * @desc    Get message for MetaMask signing
+ * @access  Public
+ */
+router.post('/get-message', authController.getMessage);
 
 module.exports = router;

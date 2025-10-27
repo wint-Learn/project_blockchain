@@ -3,7 +3,7 @@
  * Handles HTTP requests for CCCD pre-verification flow
  */
 
-const verificationService = require('../services/verification.service');
+const { requestOTP: requestOTPService, verifyOTP: verifyOTPService } = require('../services/verification');
 const logger = require('../config/logger');
 
 /**
@@ -45,7 +45,7 @@ async function requestOTP(req, res) {
     });
     
     const { pool } = req.app.locals;
-    const result = await verificationService.requestOTP(cccdNumber, phoneNumber, pool, logger);
+    const result = await requestOTPService(cccdNumber, phoneNumber, pool, logger);
     
     if (!result.success) {
       return res.status(400).json({
@@ -99,7 +99,7 @@ async function confirmOTP(req, res) {
     });
     
     const { pool } = req.app.locals;
-    const result = await verificationService.verifyOTP(cccdNumber, otp, pool, logger);
+    const result = await verifyOTPService(cccdNumber, otp, pool, logger);
     
     if (!result.success) {
       return res.status(400).json({
@@ -108,10 +108,12 @@ async function confirmOTP(req, res) {
       });
     }
     
+    // ✅ Return with citizenInfo
     return res.status(200).json({
       success: true,
       message: result.message,
-      verificationToken: result.verificationToken
+      verificationToken: result.verificationToken,
+      citizenInfo: result.citizenInfo  // 🆕 CRITICAL: Pass citizen info to frontend!
     });
     
   } catch (error) {

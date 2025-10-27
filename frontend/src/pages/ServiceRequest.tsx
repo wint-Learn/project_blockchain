@@ -14,6 +14,7 @@ import {
 import { ArrowBack, Send } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { listServices, requestService } from '../services/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 interface Service {
   id: number;
@@ -29,6 +30,7 @@ const ServiceRequest = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
+  const user = useAuthStore((state) => state.user);
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,8 +86,7 @@ const ServiceRequest = () => {
     e.preventDefault();
 
     // Check if user is logged in
-    const userAddress = localStorage.getItem('userAddress');
-    if (!userAddress) {
+    if (!user?.address) {
       enqueueSnackbar('Vui lòng đăng nhập để sử dụng dịch vụ', { variant: 'warning' });
       navigate('/login');
       return;
@@ -107,7 +108,7 @@ const ServiceRequest = () => {
 
     try {
       const response = await requestService(parseInt(serviceId || '0'), {
-        userAddress,
+        userAddress: user.address,
         requestData: formData,
       });
 

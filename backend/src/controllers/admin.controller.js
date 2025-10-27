@@ -3,7 +3,7 @@
  * Xử lý business logic cho admin operations (xem logs, analytics...)
  */
 
-const adminService = require('../services/admin.service');
+const { importCCCDBatch, getPreVerifiedList, blacklistCCCD, getDashboardStats, exportLogs } = require('../services/admin');
 const logger = require('../config/logger');
 const bcrypt = require('bcrypt');
 
@@ -144,7 +144,7 @@ async function importCCCD(req, res) {
       lines: csvData.split('\n').length 
     });
     
-    const result = await adminService.importCCCDBatch(csvData, pool, logger);
+    const result = await importCCCDBatch(csvData, pool, logger);
     
     return res.status(200).json({
       success: true,
@@ -182,7 +182,7 @@ async function getPreVerifiedCCCDs(req, res) {
       filters 
     });
     
-    const result = await adminService.getPreVerifiedList(filters, pool, logger);
+    const result = await getPreVerifiedList(filters, pool, logger);
     
     return res.status(200).json({
       success: true,
@@ -223,7 +223,7 @@ async function blacklistCCCD(req, res) {
     });
     
     const adminId = req.admin?.id || 1; // Default to first admin if no auth
-    const result = await adminService.blacklistCCCD(
+    const result = await blacklistCCCD(
       parseInt(id), 
       reason, 
       adminId, 
@@ -257,7 +257,7 @@ async function getDashboardStats(req, res) {
       admin: req.admin?.username 
     });
     
-    const stats = await adminService.getDashboardStats(pool, logger);
+    const stats = await getDashboardStats(pool, logger);
     
     return res.status(200).json({
       success: true,
@@ -294,7 +294,7 @@ async function exportLogs(req, res) {
       filters 
     });
     
-    const csv = await adminService.exportLogs(filters, pool, logger);
+    const csv = await exportLogs(filters, pool, logger);
     
     // Set headers for CSV download
     res.setHeader('Content-Type', 'text/csv');

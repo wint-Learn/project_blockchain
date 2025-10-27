@@ -37,7 +37,6 @@ const Verify = () => {
 
   // Step 1: Request OTP
   const handleRequestOTP = async () => {
-    console.log('🔍 handleRequestOTP called - Step:', activeStep);
     setError('');
     setInfo('');
 
@@ -60,7 +59,6 @@ const Verify = () => {
     setLoading(true);
 
     try {
-      console.log('📤 Calling requestOTP API with:', { cccdNumber, phoneNumber });
       const response = await requestOTP({
         cccdNumber: cccdNumber.trim(),
         phoneNumber: phoneNumber.trim(),
@@ -85,7 +83,6 @@ const Verify = () => {
 
   // Step 2: Verify OTP
   const handleVerifyOTP = async () => {
-    console.log('🔍 handleVerifyOTP called - Step:', activeStep, 'OTP:', otpCode);
     setError('');
 
     if (!otpCode) {
@@ -101,7 +98,6 @@ const Verify = () => {
     setLoading(true);
 
     try {
-      console.log('📤 Calling verifyOTP API with:', { cccdNumber, otpCode });
       const response = await verifyOTP({
         cccdNumber: cccdNumber.trim(),
         otp: otpCode.trim(),
@@ -109,18 +105,20 @@ const Verify = () => {
 
       if (response.data.success) {
         const verificationToken = response.data.verificationToken;
+        const citizenInfo = response.data.citizenInfo; // 🆕 Get auto-filled citizen info from gov DB
 
         enqueueSnackbar('Xác thực thành công! Chuyển đến trang đăng ký...', {
           variant: 'success',
         });
 
-        // Navigate to Register page with verification token
+        // Navigate to Register page with verification token + auto-filled citizen info
         setTimeout(() => {
           navigate('/register', {
             state: {
               verificationToken,
               cccdNumber,
               phoneNumber,
+              citizenInfo, // 🆕 Pass citizen info from government database
             },
           });
         }, 1500);

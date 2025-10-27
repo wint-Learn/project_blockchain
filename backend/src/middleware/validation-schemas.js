@@ -23,15 +23,40 @@ const cccdDataSchema = z.object({
 
 /**
  * Schema cho /api/register endpoint
- * NOTE: privateKey sẽ được loại bỏ trong tương lai (client-side signing)
+ * Supports both legacy format (qrData) and MetaMask format (citizen fields)
  */
-const registerSchema = z.object({
-  qrData: z.string().min(1, 'QR data is required'), // Accept raw QR string
-  // privateKey tạm thời cho demo, sẽ được thay bằng signed transaction
-  privateKey: z.string()
-    .regex(/^0x[a-fA-F0-9]{64}$/, 'Private key must be 32-byte hex string with 0x prefix')
-    .optional() // optional vì sẽ chuyển sang signed tx
-});
+const registerSchema = z.union([
+  // Legacy format (backward compatibility)
+  z.object({
+    qrData: z.string().min(1, 'QR data is required'),
+    privateKey: z.string()
+      .regex(/^0x[a-fA-F0-9]{64}$/, 'Private key must be 32-byte hex string with 0x prefix')
+      .optional(),
+    verificationToken: z.string().optional()
+  }),
+  // MetaMask format (current implementation)
+  z.object({
+    cccdNumber: z.string()
+      .min(12, 'CCCD number must be at least 12 characters')
+      .max(12, 'CCCD number must be exactly 12 characters')
+      .regex(/^\d+$/, 'CCCD number must contain only digits'),
+    fullName: z.string()
+      .min(1, 'Full name is required')
+      .max(100, 'Full name is too long'),
+    dateOfBirth: z.string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date of birth must be in format YYYY-MM-DD'),
+    gender: z.string()
+      .min(1, 'Gender is required'),
+    address: z.string()
+      .min(1, 'Address is required')
+      .max(500, 'Address is too long'),
+    issueDate: z.string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'Issue date must be in format YYYY-MM-DD'),
+    phoneNumber: z.string()
+      .regex(/^0\d{9}$/, 'Phone number must be 10 digits starting with 0'),
+    verificationToken: z.string().optional()
+  })
+]);
 
 /**
  * Schema cho /api/login endpoint

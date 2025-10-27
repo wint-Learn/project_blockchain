@@ -4,6 +4,8 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Home from './pages/Home';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import RegisterMetaMask from './pages/RegisterMetaMask';
+import LoginMetaMask from './pages/LoginMetaMask';
 import Dashboard from './pages/Dashboard';
 import Verify from './pages/Verify';
 import Services from './pages/Services';
@@ -41,8 +43,15 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/verify" element={<Verify />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
+            
+            {/* MetaMask Authentication (Primary) */}
+            <Route path="/register" element={<RegisterMetaMask />} />
+            <Route path="/login" element={<LoginMetaMask />} />
+            
+            {/* Legacy Password Authentication (Backup) */}
+            <Route path="/register-legacy" element={<Register />} />
+            <Route path="/login-legacy" element={<Login />} />
+            
             <Route
               path="/dashboard"
               element={
