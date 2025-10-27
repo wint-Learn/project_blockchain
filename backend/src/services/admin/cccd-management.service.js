@@ -81,9 +81,9 @@ async function importCCCDBatch(csvData, pool, logger) {
         
         // Insert new record
         await pool.query(
-          `INSERT INTO pre_verified_cccd (cccd_number_hash, phone_number, status, notes)
-           VALUES ($1, $2, 'pending', $3)`,
-          [cccdNumberHash, phoneNumber, notes]
+          `INSERT INTO pre_verified_cccd (cccd_number, cccd_number_hash, phone_number, status, notes)
+           VALUES ($1, $2, $3, 'pending', $4)`,
+          [cccdNumber, cccdNumberHash, phoneNumber, notes]
         );
         
         results.imported++;

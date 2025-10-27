@@ -13,9 +13,11 @@ const { createDIDOnChain } = require('../shared/blockchain.helper');
  * @param {string|null} privateKey - Private key của wallet mới
  * @param {Object} provider - Ethers provider
  * @param {Object} logger - Winston logger
- * @returns {string} Public key bytes
+ * @returns {string} Public key bytes (hex string, sẽ được convert sang bytes khi gửi)
  */
 function preparePublicKey(walletAddress, publicKey, privateKey, provider, logger) {
+  let pkHex;
+  
   if (walletAddress) {
     // User's existing wallet - public key should be provided (recovered from signature)
     if (!publicKey) {
@@ -25,12 +27,40 @@ function preparePublicKey(walletAddress, publicKey, privateKey, provider, logger
       throw error;
     }
     logger.info('Using recovered public key for existing wallet', { address: walletAddress });
-    return publicKey;
+    pkHex = publicKey;
   } else {
     // New wallet - we have private key
     const userWallet = new ethers.Wallet(privateKey, provider);
-    return userWallet.signingKey.publicKey;
+    pkHex = userWallet.signingKey.publicKey;
   }
+  
+  // CRITICAL FIX: Ensure publicKey is proper hex format
+  // Contract expects bytes - ethers will auto-convert hex string to bytes
+  if (!pkHex.startsWith('0x')) {
+    pkHex = '0x' + pkHex;
+  }
+  
+  // Validate length (33 bytes compressed or 65 bytes uncompressed)
+  const pkBytes = ethers.getBytes(pkHex);
+  if (pkBytes.length !== 33 && pkBytes.length !== 65) {
+    logger.error('Invalid public key length', { 
+      length: pkBytes.length, 
+      expected: '33 or 65 bytes',
+      publicKey: pkHex.substring(0, 20) + '...'
+    });
+    const error = new Error(`Invalid public key length: ${pkBytes.length} bytes (expected 33 or 65)`);
+    error.code = 'INVALID_PUBLIC_KEY';
+    error.statusCode = 400;
+    throw error;
+  }
+  
+  logger.info('Public key validated', { 
+    length: pkBytes.length, 
+    format: pkBytes.length === 65 ? 'uncompressed' : 'compressed',
+    preview: pkHex.substring(0, 20) + '...'
+  });
+  
+  return pkHex;
 }
 
 /**

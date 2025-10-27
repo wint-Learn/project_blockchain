@@ -4,6 +4,7 @@
  */
 
 const { verifyOTP: verifyOTPService } = require('../../services/verification');
+const { hashCCCDNumber } = require('../../utils/crypto-utils');
 const logger = require('../../config/logger');
 
 /**
@@ -35,8 +36,11 @@ async function confirmOTP(req, res) {
       ip: req.ip 
     });
     
+    // Hash CCCD number before verification (CRITICAL FIX)
+    const cccdNumberHash = hashCCCDNumber(cccdNumber);
+    
     const { pool } = req.app.locals;
-    const result = await verifyOTPService(cccdNumber, otp, pool, logger);
+    const result = await verifyOTPService(cccdNumberHash, otp, pool, logger);
     
     if (!result.success) {
       return res.status(400).json({

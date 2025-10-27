@@ -2,8 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Home from './pages/Home';
-import Register from './pages/Register';
-import Login from './pages/Login';
 import RegisterMetaMask from './pages/RegisterMetaMask';
 import LoginMetaMask from './pages/LoginMetaMask';
 import Dashboard from './pages/Dashboard';
@@ -47,10 +45,6 @@ function App() {
             {/* MetaMask Authentication (Primary) */}
             <Route path="/register" element={<RegisterMetaMask />} />
             <Route path="/login" element={<LoginMetaMask />} />
-            
-            {/* Legacy Password Authentication (Backup) */}
-            <Route path="/register-legacy" element={<Register />} />
-            <Route path="/login-legacy" element={<Login />} />
             
             <Route
               path="/dashboard"

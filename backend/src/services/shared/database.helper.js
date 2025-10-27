@@ -75,8 +75,7 @@ async function markCCCDAsClaimed(cccdNumberHash, pool) {
  */
 async function getCitizenInfo(cccdNumberHash, pool) {
   const result = await pool.query(
-    `SELECT full_name, date_of_birth, gender, address, issue_date, 
-            place_of_origin, place_of_residence, phone_number
+    `SELECT full_name, date_of_birth, gender, address, issue_date, phone_number
      FROM pre_verified_cccd 
      WHERE cccd_number_hash = $1`,
     [cccdNumberHash]

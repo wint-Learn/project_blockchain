@@ -4,6 +4,11 @@
  */
 
 const { hashCCCDNumber } = require('../../utils/crypto-utils');
+const { 
+  generateVerificationToken, 
+  getCitizenInformation,
+  updatePreVerificationStatus 
+} = require('./pre-verification.service');
 
 /**
  * Generate random 6-digit OTP code
@@ -70,6 +75,58 @@ async function requestOTP(cccdNumber, phoneNumber, pool, logger) {
     phoneNumber 
   });
   
+  // Check if CCCD exists in pre_verified_cccd table (CRITICAL CHECK)
+  const cccdCheck = await pool.query(
+    'SELECT status, phone_number FROM pre_verified_cccd WHERE cccd_number_hash = $1',
+    [cccdNumberHash]
+  );
+  
+  if (cccdCheck.rows.length === 0) {
+    logger.warn('CCCD not found in pre_verified list', { cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' });
+    return {
+      success: false,
+      message: 'Số CCCD không có trong danh sách được xác thực. Vui lòng liên hệ cơ quan cấp CCCD.'
+    };
+  }
+  
+  const currentStatus = cccdCheck.rows[0].status;
+  const registeredPhone = cccdCheck.rows[0].phone_number;
+  
+  // CRITICAL: Validate phone number matches
+  if (registeredPhone !== phoneNumber) {
+    logger.warn('Phone number mismatch', { 
+      cccdNumberHash: cccdNumberHash.slice(0, 10) + '...', 
+      providedPhone: phoneNumber,
+      registeredPhone: registeredPhone.slice(0, 4) + '****'
+    });
+    return {
+      success: false,
+      message: 'Số điện thoại không khớp với CCCD đã đăng ký. Vui lòng kiểm tra lại.'
+    };
+  }
+  
+  // Check if already verified or claimed
+  if (currentStatus === 'verified') {
+    logger.info('CCCD already verified, allowing re-verification', { cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' });
+    // Allow user to request new OTP (maybe they lost the token)
+  }
+  
+  if (currentStatus === 'claimed') {
+    logger.warn('CCCD already claimed', { cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' });
+    return {
+      success: false,
+      message: 'Số CCCD này đã được đăng ký DID rồi. Không thể yêu cầu OTP mới.'
+    };
+  }
+  
+  if (currentStatus === 'blacklisted') {
+    logger.warn('CCCD blacklisted', { cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' });
+    return {
+      success: false,
+      message: 'Số CCCD đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.'
+    };
+  }
+  
   // Generate OTP
   const otp = generateOTP();
   const expiresAt = await saveOTP(cccdNumberHash, phoneNumber, otp, pool);
@@ -134,7 +191,7 @@ async function markOTPAsVerified(otpId, pool) {
  * @param {string} otp - 6-digit OTP code
  * @param {Object} pool - PostgreSQL pool
  * @param {Object} logger - Winston logger
- * @returns {Promise<{success: boolean, message: string}>}
+ * @returns {Promise<{success: boolean, message: string, verificationToken?: string, citizenInfo?: Object}>}
  */
 async function verifyOTP(cccdNumberHash, otp, pool, logger) {
   logger.info('OTP verification attempt', { 
@@ -181,13 +238,34 @@ async function verifyOTP(cccdNumberHash, otp, pool, logger) {
     };
   }
   
-  // OTP correct!
+  // OTP correct! Mark as verified
   await markOTPAsVerified(otpRecord.id, pool);
   logger.info('OTP verified successfully', { cccdNumberHash });
   
+  // Update pre_verified_cccd status to 'verified' (CRITICAL FIX)
+  await updatePreVerificationStatus(cccdNumberHash, 'verified', pool);
+  logger.info('Pre-verification status updated to verified', { 
+    cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' 
+  });
+  
+  // Generate verification token
+  const verificationToken = generateVerificationToken(cccdNumberHash);
+  logger.info('Verification token generated', { 
+    cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' 
+  });
+  
+  // Get citizen information
+  const citizenInfo = await getCitizenInformation(cccdNumberHash, pool, logger);
+  logger.info('Citizen info retrieved', { 
+    hasInfo: !!citizenInfo,
+    fullName: citizenInfo?.fullName 
+  });
+  
   return {
     success: true,
-    message: 'Xác thực thành công!'
+    message: 'Xác thực thành công!',
+    verificationToken,
+    citizenInfo
   };
 }
 

@@ -46,8 +46,24 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Body parser
-app.use(bodyParser.json());
+// Body parser with increased limit
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
+
+// 🔍 DEBUG: Log raw body
+app.use((req, res, next) => {
+  if (req.url === '/api/auth/register') {
+    logger.info('🔍 MIDDLEWARE: Checking req.body after body-parser', {
+      hasBody: !!req.body,
+      bodyKeys: req.body ? Object.keys(req.body) : [],
+      hasWalletAddress: !!req.body?.walletAddress,
+      hasSignature: !!req.body?.signature,
+      walletAddress: req.body?.walletAddress || 'MISSING',
+      signatureLength: req.body?.signature?.length || 0
+    });
+  }
+  next();
+});
 
 // ============ DATABASE & BLOCKCHAIN SETUP ============
 

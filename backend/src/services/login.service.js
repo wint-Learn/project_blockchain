@@ -85,6 +85,7 @@ async function loginWithSignature({ address, ip, userAgent, pool, contract, logg
   if (userResult.rows.length === 0) {
     logger.warn('Login failed - user not found', { address });
     const error = new Error('Địa chỉ ví chưa đăng ký DID');
+    error.code = 'USER_NOT_REGISTERED';
     error.statusCode = 404;
     throw error;
   }

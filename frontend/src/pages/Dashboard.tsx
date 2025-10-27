@@ -178,7 +178,7 @@ export default function Dashboard() {
 
               {didInfo.hasMetadata && (
                 <Box sx={{ mt: 2 }}>
-                  <Typography variant="body1">
+                  <Typography variant="body1" component="div">
                     <strong>Trạng thái Blockchain:</strong>{' '}
                     <Chip label="Đã đăng ký on-chain" color="success" size="small" />
                   </Typography>

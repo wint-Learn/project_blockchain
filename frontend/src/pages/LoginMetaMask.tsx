@@ -22,11 +22,13 @@ const LoginMetaMask: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [step, setStep] = useState<'connect' | 'sign' | 'done'>('connect');
+  const [userClickedLogin, setUserClickedLogin] = useState(false);
 
   const handleLogin = async () => {
     try {
       setLoading(true);
       setError('');
+      setUserClickedLogin(true);
 
       // Step 1: Kết nối MetaMask
       if (!isConnected) {
@@ -54,10 +56,11 @@ const LoginMetaMask: React.FC = () => {
         return;
       }
 
-      // Step 4: Gửi signature lên backend
+      // Step 4: Gửi signature và message lên backend
       const loginResponse = await loginWithMetaMask({
         address: account!,
         signature,
+        message, // CRITICAL: Phải gửi message đã ký để backend verify đúng
       });
 
       // Step 5: Lưu user vào store
@@ -72,12 +75,25 @@ const LoginMetaMask: React.FC = () => {
     } catch (err: any) {
       console.error('Login error:', err);
       
-      if (err.response?.data?.message) {
+      // Handle specific error cases
+      if (err.response?.status === 404 || err.response?.data?.code === 'USER_NOT_REGISTERED') {
+        setError('Địa chỉ ví này chưa đăng ký DID. Vui lòng đăng ký trước khi đăng nhập.');
+        // Auto redirect to register after 3 seconds
+        setTimeout(() => {
+          navigate('/verify');
+        }, 3000);
+      } else if (err.response?.status === 401 && err.response?.data?.code === 'INVALID_SIGNATURE') {
+        setError('Chữ ký không hợp lệ. Vui lòng đảm bảo bạn đã ký đúng message và sử dụng đúng ví MetaMask.');
+      } else if (err.response?.status === 401) {
+        setError('Xác thực thất bại. Vui lòng thử lại.');
+      } else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.message) {
         setError(err.message);
       } else {
-        setError('Đăng nhập thất bại');
+        setError('Đăng nhập thất bại. Vui lòng thử lại.');
       }
       
       setLoading(false);
@@ -138,8 +154,28 @@ const LoginMetaMask: React.FC = () => {
         </Box>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          <Alert 
+            severity={error.includes('chưa đăng ký DID') ? 'warning' : 'error'} 
+            sx={{ mb: 2 }} 
+            onClose={() => setError('')}
+            action={
+              error.includes('chưa đăng ký DID') ? (
+                <Button 
+                  color="inherit" 
+                  size="small" 
+                  onClick={() => navigate('/verify')}
+                >
+                  Đăng ký ngay
+                </Button>
+              ) : undefined
+            }
+          >
             {error}
+            {error.includes('chưa đăng ký DID') && (
+              <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                Đang tự động chuyển đến trang đăng ký sau 3 giây...
+              </Typography>
+            )}
           </Alert>
         )}
 
@@ -149,7 +185,7 @@ const LoginMetaMask: React.FC = () => {
           </Alert>
         )}
 
-        {isConnected && account && (
+        {isConnected && account && userClickedLogin && (
           <Alert severity="info" sx={{ mb: 2 }}>
             <Typography variant="body2" fontWeight="bold">
               Địa chỉ ví đã kết nối:

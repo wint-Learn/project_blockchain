@@ -54,7 +54,14 @@ const registerSchema = z.union([
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Issue date must be in format YYYY-MM-DD'),
     phoneNumber: z.string()
       .regex(/^0\d{9}$/, 'Phone number must be 10 digits starting with 0'),
-    verificationToken: z.string().optional()
+    verificationToken: z.string().optional(),
+    // 🆕 MetaMask wallet fields (optional - only if user wants to use existing wallet)
+    walletAddress: z.string()
+      .regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid Ethereum address')
+      .optional(),
+    signature: z.string()
+      .regex(/^0x[a-fA-F0-9]{130}$/, 'Signature must be 65-byte hex string')
+      .optional()
   })
 ]);
 

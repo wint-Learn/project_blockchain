@@ -5,6 +5,7 @@
 
 const { registerDID } = require('../../services/registration');
 const { generateWallet, generateWalletQR } = require('../../services/wallet.service');
+const { ethers } = require('ethers'); // 🆕 Import ethers for signature verification
 
 /**
  * Register new DID with MetaMask
@@ -14,6 +15,13 @@ async function register(req, res) {
   const { pool, contract, provider, logger } = req.app.locals;
   
   try {
+    // 🔍 DEBUG: Log raw request body
+    logger.info('🔍 DEBUG: Raw req.body', { 
+      keys: Object.keys(req.body),
+      walletAddress: req.body.walletAddress,
+      signature: req.body.signature ? 'EXISTS' : 'MISSING'
+    });
+    
     const { 
       cccdNumber, 
       fullName, 
@@ -31,7 +39,9 @@ async function register(req, res) {
       cccdNumber: cccdNumber.slice(0, 4) + '***',
       phoneNumber: phoneNumber.slice(0, 4) + '***',
       withPreVerification: !!verificationToken,
-      useExistingWallet: !!walletAddress
+      useExistingWallet: !!walletAddress,
+      hasWalletAddress: !!walletAddress,
+      hasSignature: !!signature
     });
     
     let wallet;

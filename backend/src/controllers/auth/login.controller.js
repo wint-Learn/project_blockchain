@@ -14,19 +14,28 @@ async function login(req, res) {
   const { pool, contract, logger } = req.app.locals;
   
   try {
-    const { address, signature } = req.body;
+    const { address, signature, message } = req.body;
     const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
     const userAgent = req.headers['user-agent'] || 'unknown';
     
-    // Generate message that was signed
-    const message = generateLoginMessage(address);
+    // Validate that message was provided (frontend should send the message they signed)
+    if (!message) {
+      logger.warn('Missing message on login', { address, ip });
+      return res.status(400).json({ 
+        success: false,
+        error: 'Missing message parameter',
+        code: 'MISSING_MESSAGE'
+      });
+    }
     
-    // Verify signature
+    // Verify signature with the message that was actually signed
     const isValid = verifySignature(message, signature, address);
     if (!isValid) {
+      logger.warn('Invalid signature on login', { address, ip, messageLength: message?.length });
       return res.status(401).json({ 
         success: false,
         error: 'Chữ ký không hợp lệ. Vui lòng thử lại.',
+        code: 'INVALID_SIGNATURE'
       });
     }
     
@@ -52,6 +61,7 @@ async function login(req, res) {
     res.status(statusCode).json({ 
       success: false,
       error: error.message,
+      code: error.code || 'UNKNOWN_ERROR',
       details: error.details
     });
   }

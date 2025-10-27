@@ -64,12 +64,6 @@ export default function Home() {
             )}
           </Box>
 
-          <Box sx={{ mt: 4, p: 3, bgcolor: 'background.default', borderRadius: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              <strong>Lưu ý:</strong> Đây là phiên bản demo. Private key được lưu trong localStorage 
-              chỉ để thử nghiệm. Trong môi trường thực tế, hãy sử dụng MetaMask hoặc các wallet extension khác.
-            </Typography>
-          </Box>
         </Paper>
       </Box>
     </Container>

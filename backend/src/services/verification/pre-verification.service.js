@@ -108,8 +108,6 @@ function formatCitizenInfo(citizenData) {
     gender: citizenData.gender || '',
     address: citizenData.address || '',
     issueDate: formatDate(citizenData.issue_date),
-    placeOfOrigin: citizenData.place_of_origin || '',
-    placeOfResidence: citizenData.place_of_residence || '',
     phoneNumber: citizenData.phone_number || ''
   };
 }

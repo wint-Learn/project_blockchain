@@ -1,2 +1,4 @@
-# Folder logs
+# Ganache log files
 ganache_log/
+ganache_log/*.log
+ganache_log/ganache-20251024-062819.log

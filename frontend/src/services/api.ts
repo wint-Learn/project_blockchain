@@ -14,6 +14,14 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // 🔍 DEBUG: Log request data
+  if (config.url === '/auth/register') {
+    console.log('🔍 AXIOS INTERCEPTOR: Request config.data =', config.data);
+    console.log('🔍 AXIOS INTERCEPTOR: Has walletAddress?', !!config.data?.walletAddress);
+    console.log('🔍 AXIOS INTERCEPTOR: Has signature?', !!config.data?.signature);
+  }
+  
   return config;
 });
 
@@ -28,7 +36,16 @@ export const registerWithMetaMask = async (data: {
   issueDate: string;
   phoneNumber: string;
   verificationToken?: string;
+  walletAddress?: string; // CRITICAL: MetaMask wallet address
+  signature?: string; // CRITICAL: Signature to recover public key
 }) => {
+  console.log('🔍 API: registerWithMetaMask called with data:', {
+    ...data,
+    signature: data.signature ? 'EXISTS (length: ' + data.signature.length + ')' : 'MISSING',
+    hasWalletAddress: !!data.walletAddress,
+    walletAddress: data.walletAddress || 'MISSING'
+  });
+  
   return api.post('/auth/register', data);
 };
 
@@ -39,6 +56,7 @@ export const getLoginMessage = async (address: string) => {
 export const loginWithMetaMask = async (data: {
   address: string;
   signature: string;
+  message: string; // Message that was signed
 }) => {
   return api.post('/auth/login', data);
 };
