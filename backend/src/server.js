@@ -137,7 +137,7 @@ app.use('/api/verify', verifyRoutes);
 app.use('/api/services', serviceRoutes);
 
 // Backward compatibility
-const authController = require('./controllers/auth.controller');
+const authController = require('./controllers/auth');
 const { registerSchema, loginSchema, validateRequest } = require('./middleware/validation-schemas');
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -149,7 +149,7 @@ app.post('/api/register', authLimiter, validateRequest(registerSchema), authCont
 app.post('/api/login', authLimiter, validateRequest(loginSchema), authController.login);
 
 // Forward /api/logs to admin routes
-const adminController = require('./controllers/admin.controller');
+const adminController = require('./controllers/admin');
 const { auditMiddleware } = require('./middleware/audit-middleware');
 app.get('/api/logs', auditMiddleware('view_logs', (req) => req.query.address || 'all'), adminController.getLoginLogs);
 

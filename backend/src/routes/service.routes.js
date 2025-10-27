@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const serviceController = require('../controllers/service.controller');
+const serviceController = require('../controllers/service');
 const { auditMiddleware } = require('../middleware/audit-middleware');
 
 /**

@@ -1,122 +1,15 @@
 /**
- * Service Controller
- * Xử lý HTTP requests cho quản lý dịch vụ công
+ * Admin Service Management Controller
+ * Xử lý quản lý dịch vụ và phê duyệt từ admin
  */
 
-const { createService, listServices: listServicesService, requestService, approveServiceRequest, rejectServiceRequest, getUserServices, getServiceRequests } = require('../services/service-management');
-const logger = require('../config/logger');
-
-/**
- * Lấy danh sách dịch vụ (Public)
- * GET /api/services
- */
-async function listServices(req, res) {
-    const { pool } = req.app.locals;
-
-    try {
-        const { category, isActive } = req.query;
-
-        const filters = {
-            category,
-            isActive: isActive !== undefined ? isActive === 'true' : true
-        };
-
-        const services = await listServicesService(filters, pool, logger);
-
-        return res.status(200).json({
-            success: true,
-            services,
-            count: services.length
-        });
-
-    } catch (error) {
-        logger.error('List services failed', { error: error.message });
-        return res.status(500).json({
-            error: 'Lỗi khi lấy danh sách dịch vụ',
-            message: error.message
-        });
-    }
-}
-
-/**
- * User nộp đơn yêu cầu dịch vụ
- * POST /api/services/:id/request
- */
-async function requestService(req, res) {
-    const { pool } = req.app.locals;
-
-    try {
-        const { id } = req.params;
-        const { userAddress, requestData } = req.body;
-
-        if (!userAddress || !requestData) {
-            return res.status(400).json({
-                error: 'Thiếu thông tin',
-                message: 'Vui lòng cung cấp userAddress và requestData'
-            });
-        }
-
-        logger.info('Service request attempt', {
-            serviceId: id,
-            userAddress: userAddress.slice(0, 10) + '...'
-        });
-
-        const result = await requestService(
-            userAddress,
-            parseInt(id),
-            requestData,
-            pool,
-            logger
-        );
-
-        return res.status(200).json({
-            success: true,
-            message: 'Yêu cầu dịch vụ đã được gửi thành công',
-            requestId: result.requestId
-        });
-
-    } catch (error) {
-        logger.error('Request service failed', { error: error.message });
-        return res.status(400).json({
-            error: 'Lỗi khi gửi yêu cầu',
-            message: error.message
-        });
-    }
-}
-
-/**
- * User xem danh sách dịch vụ của mình
- * GET /api/services/my-services
- */
-async function getMyServices(req, res) {
-    const { pool } = req.app.locals;
-
-    try {
-        const { userAddress } = req.query;
-
-        if (!userAddress) {
-            return res.status(400).json({
-                error: 'Thiếu thông tin',
-                message: 'Vui lòng cung cấp userAddress'
-            });
-        }
-
-        const services = await getUserServices(userAddress, pool, logger);
-
-        return res.status(200).json({
-            success: true,
-            services,
-            count: services.length
-        });
-
-    } catch (error) {
-        logger.error('Get my services failed', { error: error.message });
-        return res.status(500).json({
-            error: 'Lỗi khi lấy danh sách dịch vụ',
-            message: error.message
-        });
-    }
-}
+const {
+  createService: createServiceService,
+  getServiceRequests: getServiceRequestsService,
+  approveServiceRequest: approveServiceRequestService,
+  rejectServiceRequest: rejectServiceRequestService
+} = require('../../services/service-management');
+const logger = require('../../config/logger');
 
 /**
  * Admin tạo dịch vụ mới
@@ -141,7 +34,7 @@ async function createService(req, res) {
             category
         });
 
-        const result = await createService(
+        const result = await createServiceService(
             { name, description, category, requiresVerification, metadata },
             pool,
             logger
@@ -184,7 +77,7 @@ async function getServiceRequests(req, res) {
             filters
         });
 
-        const result = await getServiceRequests(filters, pool, logger);
+        const result = await getServiceRequestsService(filters, pool, logger);
 
         return res.status(200).json({
             success: true,
@@ -217,11 +110,9 @@ async function approveServiceRequest(req, res) {
             requestId: id
         });
 
-        const adminId = req.admin?.id || 1; // Default to first admin if no auth
+        const adminId = req.admin?.id || 1;
         
-        // ============================================
-        // LẤY ADMIN WALLET TỪ DATABASE
-        // ============================================
+        // Load admin wallet
         let adminWallet = null;
         
         try {
@@ -232,17 +123,12 @@ async function approveServiceRequest(req, res) {
             
             if (adminResult.rows.length > 0 && adminResult.rows[0].wallet_address) {
                 const adminAddress = adminResult.rows[0].wallet_address;
-                
-                // Lấy private key từ environment variable
-                // Format: ADMIN_WALLET_PRIVATE_KEY_1, ADMIN_WALLET_PRIVATE_KEY_2, ...
                 const privateKeyEnvVar = `ADMIN_WALLET_PRIVATE_KEY_${adminId}`;
                 const privateKey = process.env[privateKeyEnvVar];
                 
                 if (privateKey) {
-                    // Tạo wallet instance
                     const provider = contract.provider;
                     adminWallet = new ethers.Wallet(privateKey, provider);
-                    
                     logger.info('Admin wallet loaded', {
                         adminId,
                         walletAddress: adminWallet.address
@@ -258,19 +144,15 @@ async function approveServiceRequest(req, res) {
                 error: walletError.message,
                 adminId
             });
-            // Continue without wallet - DB update will still work
         }
         
-        // ============================================
-        // APPROVE SERVICE (DB + BLOCKCHAIN)
-        // ============================================
-        const result = await approveServiceRequest(
+        const result = await approveServiceRequestService(
             parseInt(id),
             adminId,
             adminNotes || 'Đã được phê duyệt',
             pool,
             contract,
-            adminWallet, // Pass admin wallet for blockchain transaction
+            adminWallet,
             logger
         );
 
@@ -313,8 +195,8 @@ async function rejectServiceRequest(req, res) {
             reason
         });
 
-        const adminId = req.admin?.id || 1; // Default to first admin if no auth
-        const result = await rejectServiceRequest(
+        const adminId = req.admin?.id || 1;
+        const result = await rejectServiceRequestService(
             parseInt(id),
             adminId,
             reason,
@@ -337,9 +219,6 @@ async function rejectServiceRequest(req, res) {
 }
 
 module.exports = {
-    listServices,
-    requestService,
-    getMyServices,
     createService,
     getServiceRequests,
     approveServiceRequest,

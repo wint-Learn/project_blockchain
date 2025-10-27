@@ -5,7 +5,7 @@
 
 const express = require('express');
 const router = express.Router();
-const verifyController = require('../controllers/verify.controller');
+const verifyController = require('../controllers/verify');
 
 /**
  * POST /api/verify/request-otp
