@@ -83,6 +83,11 @@ export const getDIDInfo = async (address: string) => {
   return api.get(`/did/${address}`);
 };
 
+// 🆕 Get user profile (CCCD + DID combined)
+export const getUserProfile = async (address: string) => {
+  return api.get(`/user/profile/${address}`);
+};
+
 export const getLogs = async (params?: { limit?: number; offset?: number }) => {
   return api.get('/admin/logs', { params });
 };
@@ -177,11 +182,11 @@ export const listServices = async (category?: string) => {
   return api.get('/services', { params: { category } });
 };
 
-export const requestService = async (serviceId: number, data: {
-  userAddress: string;
-  requestData: any;
+export const requestService = async (data: {
+  serviceType: string;
+  serviceData: any;
 }) => {
-  return api.post(`/services/${serviceId}/request`, data);
+  return api.post(`/api/services/request`, data);
 };
 
 export const getMyServices = async (userAddress: string) => {

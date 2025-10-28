@@ -120,3 +120,8 @@
 - **Test**:
   - Ganache: Xem tx khi approve/confirm.
   - DB: Kiểm tra `service_requests` sau mỗi bước.
+
+PHASE 3 - POLISH (Nếu còn thời gian):
+8. 🔄 AI Anomaly detection
+9. 🧹 Cleanup unused files
+

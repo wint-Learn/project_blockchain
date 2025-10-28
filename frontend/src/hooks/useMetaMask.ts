@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { BrowserProvider } from 'ethers';
+import { useAuthStore } from '../store/useAuthStore'; // 🆕 Import auth store
 
 interface MetaMaskState {
     isInstalled: boolean;
@@ -14,6 +15,8 @@ interface MetaMaskState {
  * Handles connection, account changes, and signing
  */
 export const useMetaMask = () => {
+    const { user, logout } = useAuthStore(); // 🆕 Get current user and logout function
+    
     const [state, setState] = useState<MetaMaskState>({
         isInstalled: false,
         isConnected: false,
@@ -46,14 +49,38 @@ export const useMetaMask = () => {
 
             // Listen for account changes
             ethereum.on('accountsChanged', (accounts: string[]) => {
+                console.log('🔄 MetaMask account changed:', accounts);
+                
                 if (accounts.length > 0) {
+                    const newAccount = accounts[0];
+                    
+                    // 🆕 Check if user switched to different account while logged in
+                    if (user && user.address && newAccount.toLowerCase() !== user.address.toLowerCase()) {
+                        console.warn('⚠️ Account switched! Logging out user...');
+                        logout(); // Force logout when account changes
+                        setState(prev => ({
+                            ...prev,
+                            isConnected: false,
+                            account: null,
+                            error: 'Bạn đã chuyển sang ví khác. Vui lòng đăng nhập lại.',
+                        }));
+                        // Reload page to reset state
+                        window.location.href = '/login';
+                        return;
+                    }
+                    
                     setState(prev => ({
                         ...prev,
                         isConnected: true,
-                        account: accounts[0],
+                        account: newAccount,
                         error: null,
                     }));
                 } else {
+                    // User disconnected MetaMask
+                    console.warn('⚠️ MetaMask disconnected');
+                    if (user) {
+                        logout(); // Logout if user was logged in
+                    }
                     setState(prev => ({
                         ...prev,
                         isConnected: false,
@@ -78,7 +105,7 @@ export const useMetaMask = () => {
                 ethereum.removeListener('chainChanged', () => { });
             }
         };
-    }, []);
+    }, [user, logout]); // 🆕 Add dependencies
 
     /**
      * Connect to MetaMask

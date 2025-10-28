@@ -16,14 +16,19 @@ import { useSnackbar } from 'notistack';
 import { listServices, requestService } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 
-interface Service {
-  id: number;
+interface ServiceField {
   name: string;
-  category: string;
+  label: string;
+  type: string;
+  required: boolean;
+}
+
+interface Service {
+  id: string; // 'business_registration' or 'vehicle_registration'
+  name: string;
   description: string;
-  requiredFields: any;
-  processingTime: string;
-  fee: string;
+  icon: string;
+  fields: ServiceField[];
 }
 
 const ServiceRequest = () => {
@@ -49,8 +54,8 @@ const ServiceRequest = () => {
     try {
       const response = await listServices();
       if (response.data.success) {
-        const foundService = response.data.services.find(
-          (s: Service) => s.id === parseInt(serviceId || '0')
+        const foundService = response.data.data.find(
+          (s: Service) => s.id === serviceId
         );
         
         if (!foundService) {
@@ -62,9 +67,9 @@ const ServiceRequest = () => {
 
         // Initialize form data with empty values for required fields
         const initialData: { [key: string]: string } = {};
-        if (foundService.requiredFields) {
-          Object.keys(foundService.requiredFields).forEach(key => {
-            initialData[key] = '';
+        if (foundService.fields) {
+          foundService.fields.forEach((field: ServiceField) => {
+            initialData[field.name] = '';
           });
         }
         setFormData(initialData);
@@ -93,9 +98,9 @@ const ServiceRequest = () => {
     }
 
     // Validate required fields
-    if (service?.requiredFields) {
-      const emptyFields = Object.keys(service.requiredFields).filter(
-        key => !formData[key]?.trim()
+    if (service?.fields) {
+      const emptyFields = service.fields.filter(
+        field => field.required && !formData[field.name]?.trim()
       );
 
       if (emptyFields.length > 0) {
@@ -107,9 +112,9 @@ const ServiceRequest = () => {
     setSubmitting(true);
 
     try {
-      const response = await requestService(parseInt(serviceId || '0'), {
-        userAddress: user.address,
-        requestData: formData,
+      const response = await requestService({
+        serviceType: serviceId || '',
+        serviceData: formData,
       });
 
       if (response.data.success) {
@@ -159,25 +164,6 @@ const ServiceRequest = () => {
           {service.description}
         </Typography>
 
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              Phí dịch vụ:
-            </Typography>
-            <Typography variant="body1" fontWeight="bold" color="success.main">
-              {service.fee}
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-            <Typography variant="body2" color="text.secondary">
-              Thời gian xử lý:
-            </Typography>
-            <Typography variant="body1" fontWeight="bold">
-              {service.processingTime}
-            </Typography>
-          </Box>
-        </Box>
-
         <Divider sx={{ my: 3 }} />
 
         <form onSubmit={handleSubmit}>
@@ -185,15 +171,15 @@ const ServiceRequest = () => {
             Thông tin đăng ký
           </Typography>
 
-          {service.requiredFields && Object.keys(service.requiredFields).length > 0 ? (
-            Object.entries(service.requiredFields).map(([field, label]) => (
+          {service.fields && service.fields.length > 0 ? (
+            service.fields.map((field: ServiceField) => (
               <TextField
-                key={field}
-                label={label as string}
+                key={field.name}
+                label={field.label}
                 fullWidth
-                required
-                value={formData[field] || ''}
-                onChange={(e) => handleInputChange(field, e.target.value)}
+                required={field.required}
+                value={formData[field.name] || ''}
+                onChange={(e) => handleInputChange(field.name, e.target.value)}
                 sx={{ mb: 2 }}
               />
             ))

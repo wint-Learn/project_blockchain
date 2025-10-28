@@ -23,14 +23,21 @@ import { useAuthStore } from '../store/useAuthStore';
 
 interface ServiceRequest {
   id: number;
-  serviceName: string;
+  service_type: string;
   status: 'pending' | 'approved' | 'rejected';
-  requestData: any;
-  adminNotes?: string;
-  rejectReason?: string;
-  createdAt: string;
-  updatedAt: string;
+  service_data: any;
+  rejection_reason?: string;
+  tx_hash?: string;
+  service_id?: number;
+  full_name?: string;
+  created_at: string;
+  updated_at: string;
 }
+
+const serviceTypeLabels: { [key: string]: string } = {
+  business_registration: 'Đăng ký kinh doanh',
+  vehicle_registration: 'Đăng ký xe máy',
+};
 
 const statusColors: { [key: string]: 'warning' | 'success' | 'error' } = {
   pending: 'warning',
@@ -71,7 +78,7 @@ const MyServices = () => {
     try {
       const response = await getMyServices(user.address);
       if (response.data.success) {
-        setRequests(response.data.requests);
+        setRequests(response.data.data);
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Không thể tải danh sách yêu cầu';
@@ -144,7 +151,7 @@ const MyServices = () => {
                 <TableCell>Tên dịch vụ</TableCell>
                 <TableCell>Trạng thái</TableCell>
                 <TableCell>Ngày nộp</TableCell>
-                <TableCell>Ngày cập nhật</TableCell>
+                <TableCell>Blockchain TX</TableCell>
                 <TableCell>Ghi chú</TableCell>
               </TableRow>
             </TableHead>
@@ -154,7 +161,7 @@ const MyServices = () => {
                   <TableCell>#{request.id}</TableCell>
                   <TableCell>
                     <Typography variant="body2" fontWeight="bold">
-                      {request.serviceName}
+                      {serviceTypeLabels[request.service_type] || request.service_type}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -166,28 +173,34 @@ const MyServices = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">
-                      {formatDate(request.createdAt)}
+                      {formatDate(request.created_at)}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {formatDate(request.updatedAt)}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    {request.status === 'approved' && request.adminNotes && (
-                      <Typography variant="body2" color="success.main">
-                        {request.adminNotes}
+                    {request.tx_hash ? (
+                      <Typography variant="body2" color="primary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                        {request.tx_hash.substring(0, 10)}...{request.tx_hash.substring(request.tx_hash.length - 8)}
+                      </Typography>
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        -
                       </Typography>
                     )}
-                    {request.status === 'rejected' && request.rejectReason && (
+                  </TableCell>
+                  <TableCell>
+                    {request.status === 'rejected' && request.rejection_reason && (
                       <Typography variant="body2" color="error.main">
-                        {request.rejectReason}
+                        {request.rejection_reason}
                       </Typography>
                     )}
                     {request.status === 'pending' && (
                       <Typography variant="body2" color="text.secondary">
                         Đang chờ xử lý
+                      </Typography>
+                    )}
+                    {request.status === 'approved' && (
+                      <Typography variant="body2" color="success.main">
+                        Đã duyệt (Service ID: {request.service_id})
                       </Typography>
                     )}
                   </TableCell>

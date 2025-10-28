@@ -106,6 +106,9 @@ export default function Dashboard() {
             Dashboard
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button variant="outlined" onClick={() => navigate('/profile')}>
+              Thông tin cá nhân
+            </Button>
             <Button variant="contained" onClick={() => navigate('/services')}>
               Dịch vụ công
             </Button>

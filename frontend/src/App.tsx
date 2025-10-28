@@ -5,12 +5,14 @@ import Home from './pages/Home';
 import RegisterMetaMask from './pages/RegisterMetaMask';
 import LoginMetaMask from './pages/LoginMetaMask';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile'; // 🆕 Profile page
 import Verify from './pages/Verify';
 import Services from './pages/Services';
 import ServiceRequest from './pages/ServiceRequest';
 import MyServices from './pages/MyServices';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
+import ServiceRequests from './pages/admin/ServiceRequests';
 import PrivateRoute from './components/PrivateRoute';
 
 // Tạo theme MUI
@@ -51,6 +53,16 @@ function App() {
               element={
                 <PrivateRoute>
                   <Dashboard />
+                </PrivateRoute>
+              }
+            />
+            
+            {/* 🆕 Profile Page */}
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <Profile />
                 </PrivateRoute>
               }
             />

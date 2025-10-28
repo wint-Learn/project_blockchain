@@ -7,42 +7,33 @@ import {
   CardContent,
   CardActions,
   Button,
-  Chip,
   Box,
   CircularProgress,
   Alert,
 } from '@mui/material';
 import {
-  Description,
-  AccountBalance,
-  LocalHospital,
   DirectionsCar,
   Business,
-  School,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { listServices } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 
-interface Service {
-  id: number;
+interface ServiceField {
   name: string;
-  category: string;
-  description: string;
-  requiredFields: any;
-  processingTime: string;
-  fee: string;
-  isActive: boolean;
+  label: string;
+  type: string;
+  required: boolean;
+  options?: string[];
 }
 
-const categoryIcons: { [key: string]: any } = {
-  government: <AccountBalance />,
-  health: <LocalHospital />,
-  transport: <DirectionsCar />,
-  business: <Business />,
-  education: <School />,
-  other: <Description />,
-};
+interface Service {
+  id: string; // 'business_registration' or 'vehicle_registration'
+  name: string;
+  description: string;
+  icon: string;
+  fields: ServiceField[];
+}
 
 const Services = () => {
   const navigate = useNavigate();
@@ -64,7 +55,7 @@ const Services = () => {
     try {
       const response = await listServices();
       if (response.data.success) {
-        setServices(response.data.services);
+        setServices(response.data.data); // Fix: data.data instead of data.services
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Không thể tải danh sách dịch vụ';
@@ -75,7 +66,7 @@ const Services = () => {
     }
   };
 
-  const handleRequestService = (serviceId: number) => {
+  const handleRequestService = (serviceId: string) => {
     // Check if user is logged in
     if (!user?.address) {
       enqueueSnackbar('Vui lòng đăng nhập để sử dụng dịch vụ', { variant: 'warning' });
@@ -116,13 +107,12 @@ const Services = () => {
       ) : (
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
           {services.map((service) => (
-            <Box key={service.id} sx={{ flex: '1 1 calc(33.333% - 24px)', minWidth: 300 }}>
+            <Box key={service.id} sx={{ flex: '1 1 calc(50% - 24px)', minWidth: 300 }}>
               <Card
                 sx={{
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  opacity: service.isActive ? 1 : 0.6,
                 }}
               >
                 <CardContent sx={{ flexGrow: 1 }}>
@@ -136,19 +126,12 @@ const Services = () => {
                         mr: 2,
                       }}
                     >
-                      {categoryIcons[service.category] || categoryIcons.other}
+                      {service.icon === 'business' ? <Business /> : <DirectionsCar />}
                     </Box>
                     <Box>
                       <Typography variant="h6" component="div">
                         {service.name}
                       </Typography>
-                      <Chip
-                        label={service.category}
-                        size="small"
-                        color="primary"
-                        variant="outlined"
-                        sx={{ mt: 0.5 }}
-                      />
                     </Box>
                   </Box>
 
@@ -156,33 +139,18 @@ const Services = () => {
                     {service.description}
                   </Typography>
 
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Thời gian xử lý:
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold">
-                      {service.processingTime}
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Phí dịch vụ:
-                    </Typography>
-                    <Typography variant="body2" fontWeight="bold" color="success.main">
-                      {service.fee}
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Số trường bắt buộc: {service.fields?.filter(f => f.required).length || 0}
+                  </Typography>
                 </CardContent>
 
                 <CardActions sx={{ p: 2, pt: 0 }}>
                   <Button
                     fullWidth
                     variant="contained"
-                    disabled={!service.isActive}
                     onClick={() => handleRequestService(service.id)}
                   >
-                    {service.isActive ? 'Đăng ký dịch vụ' : 'Tạm ngưng'}
+                    Đăng ký dịch vụ
                   </Button>
                 </CardActions>
               </Card>

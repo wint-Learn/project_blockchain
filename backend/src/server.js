@@ -121,22 +121,60 @@ try {
   contract = null;
 }
 
+// ServiceRegistry contract setup
+let serviceContract;
+try {
+  const serviceContractAddress = process.env.SERVICE_CONTRACT_ADDRESS;
+  
+  if (serviceContractAddress && provider) {
+    let serviceAbi;
+    const SERVICE_JSON_PATH = path.resolve(__dirname, '../../blockchain/artifacts/contracts/ServiceRegistry.sol/ServiceRegistry.json');
+    
+    if (fs.existsSync(SERVICE_JSON_PATH)) {
+      serviceAbi = require(SERVICE_JSON_PATH).abi;
+      logger.info('Loaded ServiceRegistry ABI from JSON file');
+    } else {
+      logger.warn('ServiceRegistry ABI not found, using fallback');
+      serviceAbi = [
+        'function registerService(address _userAddress, bytes32 _cccdHash, string memory _serviceType, string memory _data) public returns (uint256)',
+        'function revokeService(address _userAddress, uint256 _serviceId) public',
+        'function getService(address _userAddress, uint256 _serviceId) public view returns (bytes32, string, string, uint256, address, bool)',
+        'function getUserServiceCount(address _userAddress) public view returns (uint256)',
+        'event ServiceRegistered(address indexed user, uint256 indexed serviceId, bytes32 cccdHash, string serviceType, uint256 timestamp)',
+        'event ServiceApproved(address indexed user, uint256 indexed serviceId, address approvedBy, uint256 timestamp)',
+      ];
+    }
+    
+    serviceContract = new ethers.Contract(serviceContractAddress, serviceAbi, provider);
+    logger.info('ServiceRegistry contract connected', { serviceContractAddress });
+  } else {
+    logger.warn('SERVICE_CONTRACT_ADDRESS not set, service features disabled');
+    serviceContract = null;
+  }
+} catch (error) {
+  logger.error('ServiceRegistry setup error:', error.message);
+  serviceContract = null;
+}
+
 // Store dependencies in app.locals để routes/controllers có thể access
 app.locals.pool = pool;
 app.locals.provider = provider;
 app.locals.contract = contract;
+app.locals.serviceContract = serviceContract;
 app.locals.logger = logger;
 
 // ============ ROUTES ============
 
-let healthRoutes, didRoutes, authRoutes, adminRoutes, verifyRoutes, serviceRoutes;
+let healthRoutes, didRoutes, authRoutes, adminRoutes, verifyRoutes, serviceRoutes, servicesRoutes, userRoutes;
 try {
   healthRoutes = require('./routes/health.routes');
   didRoutes = require('./routes/did.routes');
   authRoutes = require('./routes/auth.routes');
   adminRoutes = require('./routes/admin.routes');
   verifyRoutes = require('./routes/verify.routes');
-  serviceRoutes = require('./routes/service.routes');
+  serviceRoutes = require('./routes/service.routes'); // Legacy route (wrapper for Phase 2)
+  servicesRoutes = require('./routes/services.routes'); // 🆕 Public Services routes (Phase 2)
+  userRoutes = require('./routes/user.routes'); // User routes
   logger.info('All routes loaded successfully');
 } catch (error) {
   logger.error('Error loading routes:', error.message);
@@ -150,7 +188,8 @@ app.use('/api/did', didRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/verify', verifyRoutes);
-app.use('/api/services', serviceRoutes);
+app.use('/api/services', serviceRoutes); // Legacy routes (wrapper)
+app.use('/api/user', userRoutes); // User routes
 
 // Backward compatibility
 const authController = require('./controllers/auth');
