@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { Pool } = require('pg');
-const ethers = require('ethers');
+const crypto = require('crypto');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://postgres:1@localhost:5432/identity_db'
@@ -8,7 +8,7 @@ const pool = new Pool({
 
 async function resetCCCD() {
   const cccdNumber = '036202012345';
-  const cccdHash = ethers.keccak256(ethers.toUtf8Bytes(cccdNumber));
+  const cccdHash = '0x' + crypto.createHash('sha256').update(cccdNumber).digest('hex');
   
   console.log('🔄 Resetting CCCD:', cccdNumber);
   

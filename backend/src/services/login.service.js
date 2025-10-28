@@ -113,6 +113,17 @@ async function loginWithSignature({ address, ip, userAgent, pool, contract, logg
     ]
   );
   
+  // 4) Log to user_logins for activity history
+  try {
+    await pool.query(
+      `INSERT INTO user_logins (wallet_address, ip_address, user_agent, location)
+       VALUES ($1, $2, $3, $4)`,
+      [address.toLowerCase(), ip, userAgent, null] // location can be added later with geo-IP service
+    );
+  } catch (err) {
+    logger.warn('Failed to log user login activity', { error: err.message });
+  }
+  
   logger.info('MetaMask login successful', { address, ip, anomaly: anomalyCheck.isAnomaly });
   
   return {

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test API Connection</title>
+    <style>
+        body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #fff; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; font-size: 14px; }
+        .success { color: #4caf50; }
+        .error { color: #f44336; }
+        .log { background: #2d2d2d; padding: 10px; margin: 10px 0; border-left: 3px solid #2196f3; }
+        pre { white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>🔍 API Connection Test</h1>
+    <p>Backend URL: <strong>http://localhost:3000</strong></p>
+    
+    <div>
+        <button onclick="testHealth()">Test /health</button>
+        <button onclick="testServices()">Test /api/services</button>
+        <button onclick="testPending()">Test /api/services/admin/pending</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+    
+    <div id="logs"></div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.className = 'log ' + type;
+            div.innerHTML = `<strong>[${new Date().toLocaleTimeString()}]</strong> ${message}`;
+            logs.insertBefore(div, logs.firstChild);
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        async function testHealth() {
+            log('Testing /health...');
+            try {
+                const response = await fetch('http://localhost:3000/health');
+                const data = await response.json();
+                log(`✅ /health → ${response.status} ${response.statusText}<pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+            } catch (error) {
+                log(`❌ /health → ${error.message}`, 'error');
+            }
+        }
+        
+        async function testServices() {
+            log('Testing /api/services...');
+            try {
+                const response = await fetch('http://localhost:3000/api/services', {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                log(`✅ /api/services → ${response.status} ${response.statusText}<pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+            } catch (error) {
+                log(`❌ /api/services → ${error.message}`, 'error');
+            }
+        }
+        
+        async function testPending() {
+            log('Testing /api/services/admin/pending...');
+            try {
+                const response = await fetch('http://localhost:3000/api/services/admin/pending', {
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                log(`✅ /api/services/admin/pending → ${response.status} ${response.statusText}<pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+            } catch (error) {
+                log(`❌ /api/services/admin/pending → ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

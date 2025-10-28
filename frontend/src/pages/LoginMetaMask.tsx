@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -18,11 +18,20 @@ const LoginMetaMask: React.FC = () => {
   const navigate = useNavigate();
   const { isInstalled, isConnected, account, connect, signMessage, error: metamaskError } = useMetaMask();
   const setUser = useAuthStore((state) => state.setUser);
+  const user = useAuthStore((state) => state.user);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [step, setStep] = useState<'connect' | 'sign' | 'done'>('connect');
   const [userClickedLogin, setUserClickedLogin] = useState(false);
+
+  // Reset connection state when component mounts (after logout)
+  useEffect(() => {
+    // If user is already logged in, redirect to dashboard
+    if (user?.address) {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
 
   const handleLogin = async () => {
     try {

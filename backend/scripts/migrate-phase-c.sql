@@ -9,7 +9,7 @@
 -- ============================================
 CREATE TABLE IF NOT EXISTS pre_verified_cccd (
   id SERIAL PRIMARY KEY,
-  cccd_number_hash VARCHAR(66) UNIQUE NOT NULL, -- keccak256(cccdNumber)
+  cccd_number_hash VARCHAR(66) UNIQUE NOT NULL, -- sha256(cccdNumber) with 0x prefix
   phone_number VARCHAR(15) NOT NULL,
   status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'verified', 'claimed', 'blacklisted')),
   verified_at TIMESTAMP,

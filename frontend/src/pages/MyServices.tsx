@@ -10,16 +10,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
   Button,
   Box,
-  CircularProgress,
-  Alert,
 } from '@mui/material';
-import { ArrowBack, Refresh } from '@mui/icons-material';
+import { Refresh } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { getMyServices } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
+import UserLayout from '../components/layout/UserLayout';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
+import EmptyState from '../components/shared/EmptyState';
+import StatusChip from '../components/shared/StatusChip';
 
 interface ServiceRequest {
   id: number;
@@ -39,18 +40,6 @@ const serviceTypeLabels: { [key: string]: string } = {
   vehicle_registration: 'Đăng ký xe máy',
 };
 
-const statusColors: { [key: string]: 'warning' | 'success' | 'error' } = {
-  pending: 'warning',
-  approved: 'success',
-  rejected: 'error',
-};
-
-const statusLabels: { [key: string]: string } = {
-  pending: 'Chờ duyệt',
-  approved: 'Đã duyệt',
-  rejected: 'Đã từ chối',
-};
-
 const MyServices = () => {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
@@ -61,8 +50,22 @@ const MyServices = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetchMyServices();
-  }, []);
+    console.log('[MyServices] Component mounted or user changed');
+    console.log('[MyServices] User:', user);
+    console.log('[MyServices] User address:', user?.address);
+    
+    // Wait a bit for auth store to load from localStorage
+    const timer = setTimeout(() => {
+      if (user?.address) {
+        fetchMyServices();
+      } else {
+        setError('Vui lòng đăng nhập để xem dịch vụ của bạn');
+        setLoading(false);
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [user?.address]);
 
   const fetchMyServices = async () => {
     setLoading(true);
@@ -70,8 +73,8 @@ const MyServices = () => {
 
     // Check if user is logged in
     if (!user?.address) {
-      enqueueSnackbar('Vui lòng đăng nhập để xem dịch vụ của bạn', { variant: 'warning' });
-      navigate('/login');
+      setError('Thiếu địa chỉ ví. Vui lòng đăng nhập lại.');
+      setLoading(false);
       return;
     }
 
@@ -102,30 +105,32 @@ const MyServices = () => {
 
   if (loading) {
     return (
-      <Container sx={{ py: 4, textAlign: 'center' }}>
-        <CircularProgress />
-      </Container>
+      <UserLayout title="Dịch vụ của tôi" showBackButton={true}>
+        <Container maxWidth="lg">
+          <LoadingSpinner message="Đang tải danh sách dịch vụ..." />
+        </Container>
+      </UserLayout>
     );
   }
 
   if (error) {
     return (
-      <Container sx={{ py: 4 }}>
-        <Alert severity="error">{error}</Alert>
-        <Box sx={{ mt: 2 }}>
-          <Button startIcon={<ArrowBack />} onClick={() => navigate('/services')}>
-            Quay lại danh sách dịch vụ
-          </Button>
-        </Box>
-      </Container>
+      <UserLayout title="Dịch vụ của tôi" showBackButton={true}>
+        <Container maxWidth="lg" sx={{ py: 3 }}>
+          <EmptyState 
+            message={error} 
+            type="error" 
+            action={{ label: 'Thử lại', onClick: fetchMyServices }} 
+          />
+        </Container>
+      </UserLayout>
     );
   }
 
   return (
-    <Container sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Dịch vụ của tôi</Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
+    <UserLayout title="Dịch vụ của tôi" showBackButton={true}>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mb: 3 }}>
           <Button startIcon={<Refresh />} onClick={fetchMyServices}>
             Làm mới
           </Button>
@@ -133,16 +138,14 @@ const MyServices = () => {
             Đăng ký dịch vụ mới
           </Button>
         </Box>
-      </Box>
 
-      {requests.length === 0 ? (
-        <Alert severity="info">
-          Bạn chưa đăng ký dịch vụ nào.{' '}
-          <Button onClick={() => navigate('/services')} sx={{ ml: 1 }}>
-            Xem danh sách dịch vụ
-          </Button>
-        </Alert>
-      ) : (
+        {requests.length === 0 ? (
+          <EmptyState 
+            message="Bạn chưa đăng ký dịch vụ nào." 
+            type="info"
+            action={{ label: 'Xem danh sách dịch vụ', onClick: () => navigate('/services') }}
+          />
+        ) : (
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -165,11 +168,7 @@ const MyServices = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip
-                      label={statusLabels[request.status]}
-                      color={statusColors[request.status]}
-                      size="small"
-                    />
+                    <StatusChip status={request.status} />
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2" color="text.secondary">
@@ -210,7 +209,8 @@ const MyServices = () => {
           </Table>
         </TableContainer>
       )}
-    </Container>
+      </Container>
+    </UserLayout>
   );
 };
 

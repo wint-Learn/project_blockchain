@@ -9,11 +9,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
   Button,
   Box,
-  CircularProgress,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -24,7 +21,10 @@ import {
 } from '@mui/material';
 import { Refresh, CheckCircle, Cancel } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { useAuthStore } from '../../store/useAuthStore';
+import AdminLayout from '../../components/layout/AdminLayout';
+import LoadingSpinner from '../../components/shared/LoadingSpinner';
+import EmptyState from '../../components/shared/EmptyState';
+import StatusChip from '../../components/shared/StatusChip';
 
 interface ServiceRequest {
   id: number;
@@ -67,21 +67,8 @@ const serviceTypeLabels: { [key: string]: string } = {
   vehicle_registration: 'Đăng ký xe máy',
 };
 
-const statusColors: { [key: string]: 'warning' | 'success' | 'error' } = {
-  pending: 'warning',
-  approved: 'success',
-  rejected: 'error',
-};
-
-const statusLabels: { [key: string]: string } = {
-  pending: 'Chờ duyệt',
-  approved: 'Đã duyệt',
-  rejected: 'Đã từ chối',
-};
-
 const ServiceRequests = () => {
   const { enqueueSnackbar } = useSnackbar();
-  const user = useAuthStore((state) => state.user);
 
   const [tabValue, setTabValue] = useState(0);
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -102,10 +89,10 @@ const ServiceRequests = () => {
 
     try {
       const endpoint = tabValue === 0 
-        ? '/api/services/admin/pending'
-        : '/api/services/admin/all';
+        ? '/services/admin/pending'
+        : '/services/admin/all';
       
-      const response = await fetch(`http://localhost:3000${endpoint}`, {
+      const response = await fetch(`http://localhost:3000/api${endpoint}`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -128,11 +115,6 @@ const ServiceRequests = () => {
   };
 
   const handleApprove = async (request: ServiceRequest) => {
-    if (!user?.address) {
-      enqueueSnackbar('Vui lòng đăng nhập', { variant: 'warning' });
-      return;
-    }
-
     setProcessing(true);
 
     try {
@@ -141,9 +123,7 @@ const ServiceRequests = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          adminAddress: user.address,
-        }),
+        body: JSON.stringify({}), // Backend tự động dùng admin wallet
       });
 
       const data = await response.json();
@@ -168,7 +148,7 @@ const ServiceRequests = () => {
   };
 
   const handleRejectConfirm = async () => {
-    if (!selectedRequest || !user?.address) return;
+    if (!selectedRequest) return;
 
     if (!rejectionReason.trim()) {
       enqueueSnackbar('Vui lòng nhập lý do từ chối', { variant: 'warning' });
@@ -184,7 +164,6 @@ const ServiceRequests = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          adminAddress: user.address,
           rejectionReason: rejectionReason,
         }),
       });
@@ -221,34 +200,33 @@ const ServiceRequests = () => {
     : requests;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">Quản lý dịch vụ</Typography>
-        <Button startIcon={<Refresh />} onClick={fetchRequests} disabled={loading}>
-          Làm mới
-        </Button>
-      </Box>
+    <AdminLayout>
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h5">Quản lý dịch vụ</Typography>
+          <Button startIcon={<Refresh />} onClick={fetchRequests} disabled={loading}>
+            Làm mới
+          </Button>
+        </Box>
 
-      <Paper sx={{ mb: 3 }}>
-        <Tabs
-          value={tabValue}
-          onChange={(_, newValue) => setTabValue(newValue)}
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab label="Chờ duyệt" />
-          <Tab label="Tất cả" />
-        </Tabs>
+        <Paper sx={{ mb: 3 }}>
+          <Tabs
+            value={tabValue}
+            onChange={(_, newValue) => setTabValue(newValue)}
+            sx={{ borderBottom: 1, borderColor: 'divider' }}
+          >
+            <Tab label="Chờ duyệt" />
+            <Tab label="Tất cả" />
+          </Tabs>
 
-        <TabPanel value={tabValue} index={0}>
-          {loading ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : error ? (
-            <Alert severity="error">{error}</Alert>
-          ) : filteredRequests.length === 0 ? (
-            <Alert severity="info">Không có yêu cầu nào đang chờ duyệt</Alert>
-          ) : (
+          <TabPanel value={tabValue} index={0}>
+            {loading ? (
+              <LoadingSpinner message="Đang tải yêu cầu..." />
+            ) : error ? (
+              <EmptyState message={error} type="error" action={{ label: 'Thử lại', onClick: fetchRequests }} />
+            ) : filteredRequests.length === 0 ? (
+              <EmptyState message="Không có yêu cầu nào đang chờ duyệt" type="info" />
+            ) : (
             <TableContainer>
               <Table>
                 <TableHead>
@@ -277,11 +255,7 @@ const ServiceRequests = () => {
                         {serviceTypeLabels[request.service_type] || request.service_type}
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={statusLabels[request.status]}
-                          color={statusColors[request.status]}
-                          size="small"
-                        />
+                        <StatusChip status={request.status} />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" color="text.secondary">
@@ -324,13 +298,11 @@ const ServiceRequests = () => {
 
         <TabPanel value={tabValue} index={1}>
           {loading ? (
-            <Box sx={{ textAlign: 'center', py: 4 }}>
-              <CircularProgress />
-            </Box>
+            <LoadingSpinner message="Đang tải yêu cầu..." />
           ) : error ? (
-            <Alert severity="error">{error}</Alert>
-          ) : filteredRequests.length === 0 ? (
-            <Alert severity="info">Chưa có yêu cầu nào</Alert>
+            <EmptyState message={error} type="error" action={{ label: 'Thử lại', onClick: fetchRequests }} />
+          ) : requests.length === 0 ? (
+            <EmptyState message="Chưa có yêu cầu nào" type="info" />
           ) : (
             <TableContainer>
               <Table>
@@ -346,7 +318,7 @@ const ServiceRequests = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filteredRequests.map((request) => (
+                  {requests.map((request) => (
                     <TableRow key={request.id} hover>
                       <TableCell>#{request.id}</TableCell>
                       <TableCell>
@@ -361,11 +333,7 @@ const ServiceRequests = () => {
                         {serviceTypeLabels[request.service_type] || request.service_type}
                       </TableCell>
                       <TableCell>
-                        <Chip
-                          label={statusLabels[request.status]}
-                          color={statusColors[request.status]}
-                          size="small"
-                        />
+                        <StatusChip status={request.status} />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2" color="text.secondary">
@@ -429,7 +397,8 @@ const ServiceRequests = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+      </Container>
+    </AdminLayout>
   );
 };
 

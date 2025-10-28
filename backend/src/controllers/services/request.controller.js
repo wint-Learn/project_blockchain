@@ -13,10 +13,10 @@ async function requestService(req, res) {
   const logger = req.app.locals.logger;
   
   try {
-    const { walletAddress, cccdNumber, serviceType, serviceData } = req.body;
+    const { walletAddress, serviceType, serviceData } = req.body;
     
     // Validate input
-    if (!walletAddress || !cccdNumber || !serviceType || !serviceData) {
+    if (!walletAddress || !serviceType || !serviceData) {
       return res.status(400).json({
         success: false,
         message: 'Thiếu thông tin bắt buộc',
@@ -32,12 +32,9 @@ async function requestService(req, res) {
       });
     }
     
-    // Hash CCCD
-    const cccdHash = hashCCCDNumber(cccdNumber);
-    
-    // Kiểm tra user đã đăng ký chưa
+    // Kiểm tra user đã đăng ký chưa và lấy CCCD hash
     const userQuery = await pool.query(
-      'SELECT wallet_address FROM users WHERE wallet_address = $1',
+      'SELECT wallet_address, cccd_number_hash FROM users WHERE wallet_address = $1',
       [walletAddress.toLowerCase()]
     );
     
@@ -47,6 +44,8 @@ async function requestService(req, res) {
         message: 'Vui lòng đăng ký tài khoản trước khi sử dụng dịch vụ',
       });
     }
+    
+    const cccdHash = userQuery.rows[0].cccd_number_hash;
     
     // Kiểm tra CCCD có trong danh sách pre-verified không
     const cccdQuery = await pool.query(
@@ -156,9 +155,10 @@ async function getMyRequests(req, res) {
         sr.rejection_reason,
         sr.tx_hash,
         sr.service_id,
+        sr.approved_by,
+        sr.approved_at,
         sr.created_at,
         sr.updated_at,
-        sr.approved_at,
         pv.full_name
       FROM service_requests sr
       LEFT JOIN pre_verified_cccd pv ON sr.cccd_number_hash = pv.cccd_number_hash

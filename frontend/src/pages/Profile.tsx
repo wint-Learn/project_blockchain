@@ -5,16 +5,16 @@ import {
   Box,
   Typography,
   Paper,
-  Button,
   Alert,
   Divider,
   Chip,
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
-import { getUserProfile } from '../services/api'; // 🆕 Use new API
+import { getUserProfile } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { useMetaMask } from '../hooks/useMetaMask';
-import Loading from '../components/Loading';
+import UserLayout from '../components/layout/UserLayout';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 import PersonIcon from '@mui/icons-material/Person';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import BadgeIcon from '@mui/icons-material/Badge';
@@ -53,7 +53,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const { account, isConnected } = useMetaMask();
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export default function Profile() {
     try {
       setLoading(true);
       const response = await getUserProfile(user.address);
-      setProfileData(response.data.data); // API returns { success, data: {...} }
+      setProfileData(response.data.data);
     } catch (error: any) {
       console.error('Error fetching profile:', error);
       enqueueSnackbar('Không thể tải thông tin cá nhân', { variant: 'error' });
@@ -80,41 +80,19 @@ export default function Profile() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    enqueueSnackbar('Đã đăng xuất', { variant: 'info' });
-    navigate('/login');
-  };
-
   if (loading) {
-    return <Loading message="Đang tải thông tin cá nhân..." />;
+    return (
+      <UserLayout title="Thông tin cá nhân" showBackButton={true}>
+        <Container maxWidth="lg">
+          <LoadingSpinner message="Đang tải thông tin cá nhân..." />
+        </Container>
+      </UserLayout>
+    );
   }
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        {/* Header */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-          }}
-        >
-          <Typography variant="h4" component="h1">
-            <PersonIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-            Thông Tin Cá Nhân
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button variant="outlined" onClick={() => navigate('/dashboard')}>
-              Quay lại Dashboard
-            </Button>
-            <Button variant="outlined" color="error" onClick={handleLogout}>
-              Đăng xuất
-            </Button>
-          </Box>
-        </Box>
+    <UserLayout title="Thông tin cá nhân" showBackButton={true}>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
 
         {/* Account Status Alert */}
         {isConnected && account ? (
@@ -295,8 +273,7 @@ export default function Profile() {
             </Alert>
           </Box>
         )}
-
-      </Box>
-    </Container>
+      </Container>
+    </UserLayout>
   );
 }

@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/admin');
+const usersController = require('../controllers/admin/users.controller');
+const statsController = require('../controllers/admin/stats.controller');
 const { auditMiddleware } = require('../middleware/audit-middleware');
 
 /**
@@ -9,6 +11,16 @@ const { auditMiddleware } = require('../middleware/audit-middleware');
  * @access  Public
  */
 router.post('/login', adminController.adminLogin);
+
+/**
+ * @route   GET /api/admin/users
+ * @desc    Lấy danh sách users đã đăng ký DID
+ * @access  Admin
+ */
+router.get('/users',
+  auditMiddleware('view_users', () => 'all'),
+  usersController.getRegisteredUsers
+);
 
 /**
  * @route   GET /api/admin/logs
@@ -41,6 +53,16 @@ router.get('/cccd/list',
 );
 
 /**
+ * @route   GET /api/admin/cccd
+ * @desc    Lấy danh sách pre-verified CCCD (alias)
+ * @access  Admin
+ */
+router.get('/cccd',
+  auditMiddleware('view_cccd_list', () => 'all'),
+  adminController.getPreVerifiedCCCDs
+);
+
+/**
  * @route   PUT /api/admin/cccd/:id/blacklist
  * @desc    Blacklist một CCCD
  * @access  Admin
@@ -58,6 +80,16 @@ router.put('/cccd/:id/blacklist',
 router.get('/stats',
   auditMiddleware('view_stats', () => 'dashboard'),
   adminController.getDashboardStats
+);
+
+/**
+ * @route   GET /api/admin/services/recent
+ * @desc    Lấy danh sách yêu cầu dịch vụ gần đây
+ * @access  Admin
+ */
+router.get('/services/recent',
+  auditMiddleware('view_recent_requests', () => 'dashboard'),
+  statsController.getRecentRequests
 );
 
 /**

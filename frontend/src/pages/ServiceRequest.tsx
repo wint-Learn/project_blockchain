@@ -113,6 +113,7 @@ const ServiceRequest = () => {
 
     try {
       const response = await requestService({
+        walletAddress: user.address,
         serviceType: serviceId || '',
         serviceData: formData,
       });

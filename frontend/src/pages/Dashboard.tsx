@@ -5,7 +5,6 @@ import {
   Box,
   Typography,
   Paper,
-  Button,
   Alert,
   Table,
   TableBody,
@@ -14,11 +13,21 @@ import {
   TableHead,
   TableRow,
   Chip,
+  Card,
+  CardContent,
+  Stack,
 } from '@mui/material';
+import {
+  AccountBalanceWallet,
+  Fingerprint,
+  CalendarToday,
+  TrendingUp,
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { getDIDInfo, getLogs } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
-import Loading from '../components/Loading';
+import UserLayout from '../components/layout/UserLayout';
+import LoadingSpinner from '../components/shared/LoadingSpinner';
 
 interface DIDInfo {
   address: string;
@@ -32,6 +41,7 @@ interface LogEntry {
   id: number;
   wallet_address: string;
   action: string;
+  ip_address?: string;
   anomaly_score: number;
   timestamp: string;
 }
@@ -40,9 +50,10 @@ export default function Dashboard() {
   const [didInfo, setDidInfo] = useState<DIDInfo | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     console.log('[Dashboard] useEffect triggered, user:', user);
@@ -62,63 +73,92 @@ export default function Dashboard() {
     try {
       // Fetch DID info
       const didResponse = await getDIDInfo(user!.address);
+      console.log('[Dashboard] DID Response:', didResponse);
       setDidInfo(didResponse.data);
 
       // Fetch logs
       const logsResponse = await getLogs({ limit: 10 });
+      console.log('[Dashboard] Logs Response:', logsResponse);
       setLogs(logsResponse.data.logs || []);
     } catch (error: any) {
       console.error('Fetch data error:', error);
+      console.error('Error response:', error.response);
       const message =
-        error.response?.data?.message || 'Không thể tải dữ liệu';
+        error.response?.data?.message || error.message || 'Không thể tải dữ liệu';
       enqueueSnackbar(message, { variant: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    enqueueSnackbar('Đã đăng xuất', { variant: 'info' });
-    navigate('/login');
-  };
-
   if (loading) {
     return (
-      <Container maxWidth="lg">
-        <Loading message="Đang tải dữ liệu..." />
-      </Container>
+      <UserLayout title="Dashboard" showBackButton={false}>
+        <Container maxWidth="lg">
+          <LoadingSpinner message="Đang tải dữ liệu..." />
+        </Container>
+      </UserLayout>
     );
   }
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-          }}
-        >
-          <Typography variant="h4" component="h1">
-            Dashboard
-          </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button variant="outlined" onClick={() => navigate('/profile')}>
-              Thông tin cá nhân
-            </Button>
-            <Button variant="contained" onClick={() => navigate('/services')}>
-              Dịch vụ công
-            </Button>
-            <Button variant="outlined" onClick={() => navigate('/my-services')}>
-              Dịch vụ của tôi
-            </Button>
-            <Button variant="outlined" color="error" onClick={handleLogout}>
-              Đăng xuất
-            </Button>
-          </Box>
+    <UserLayout title="Dashboard" showBackButton={false}>
+      <Container maxWidth="lg" sx={{ py: 3 }}>
+        {/* Stats Cards */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2, mb: 4 }}>
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <AccountBalanceWallet color="primary" sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Địa chỉ ví</Typography>
+                  <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                    {user?.address.substring(0, 10)}...{user?.address.substring(36)}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <Fingerprint color="success" sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Trạng thái DID</Typography>
+                  <Typography variant="h6" color="success.main">Đã đăng ký</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <CalendarToday color="info" sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Ngày tạo</Typography>
+                  <Typography variant="h6">
+                    {didInfo ? new Date(didInfo.registeredAt).toLocaleDateString('vi-VN') : 'N/A'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <Stack direction="row" spacing={2} alignItems="center">
+                <TrendingUp color={user?.anomalyScore && user.anomalyScore > 0.5 ? 'error' : 'success'} sx={{ fontSize: 40 }} />
+                <Box>
+                  <Typography variant="body2" color="text.secondary">Anomaly Score</Typography>
+                  <Typography variant="h6" color={user?.anomalyScore && user.anomalyScore > 0.5 ? 'error.main' : 'success.main'}>
+                    {user?.anomalyScore?.toFixed(2) || '0.00'}
+                  </Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
         </Box>
 
         {/* DID Info Section */}
@@ -208,36 +248,35 @@ export default function Dashboard() {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Địa chỉ ví</TableCell>
-                  <TableCell>Hành động</TableCell>
-                  <TableCell>Anomaly Score</TableCell>
                   <TableCell>Thời gian</TableCell>
+                  <TableCell>Hành động</TableCell>
+                  <TableCell>IP Address</TableCell>
+                  <TableCell>Anomaly Score</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} align="center">
-                      Chưa có dữ liệu
+                    <TableCell colSpan={4} align="center">
+                      Chưa có lịch sử hoạt động
                     </TableCell>
                   </TableRow>
                 ) : (
                   logs.map((log) => (
                     <TableRow key={log.id}>
-                      <TableCell>{log.id}</TableCell>
                       <TableCell>
-                        {log.wallet_address.substring(0, 10)}...
+                        {new Date(log.timestamp).toLocaleString('vi-VN')}
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={log.action}
+                          label={log.action === 'register' ? 'Đăng ký' : log.action === 'login' ? 'Đăng nhập' : log.action}
                           color={
                             log.action === 'register' ? 'primary' : 'secondary'
                           }
                           size="small"
                         />
                       </TableCell>
+                      <TableCell>{log.ip_address || 'N/A'}</TableCell>
                       <TableCell>
                         <Chip
                           label={(log.anomaly_score ?? 0).toFixed(2)}
@@ -247,9 +286,6 @@ export default function Dashboard() {
                           size="small"
                         />
                       </TableCell>
-                      <TableCell>
-                        {new Date(log.timestamp).toLocaleString('vi-VN')}
-                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -257,7 +293,7 @@ export default function Dashboard() {
             </Table>
           </TableContainer>
         </Paper>
-      </Box>
-    </Container>
+      </Container>
+    </UserLayout>
   );
 }

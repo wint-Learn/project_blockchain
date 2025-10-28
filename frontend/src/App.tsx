@@ -1,32 +1,23 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from './theme'; // Import custom theme
 import Home from './pages/Home';
 import RegisterMetaMask from './pages/RegisterMetaMask';
 import LoginMetaMask from './pages/LoginMetaMask';
 import Dashboard from './pages/Dashboard';
-import Profile from './pages/Profile'; // 🆕 Profile page
+import Profile from './pages/Profile';
 import Verify from './pages/Verify';
 import Services from './pages/Services';
 import ServiceRequest from './pages/ServiceRequest';
 import MyServices from './pages/MyServices';
+import ActivityHistory from './pages/ActivityHistory';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ServiceRequests from './pages/admin/ServiceRequests';
+import RegisteredUsers from './pages/admin/RegisteredUsers';
+import PreVerifiedCCCD from './pages/admin/PreVerifiedCCCD';
 import PrivateRoute from './components/PrivateRoute';
-
-// Tạo theme MUI
-const theme = createTheme({
-  palette: {
-    mode: 'light',
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-});
 
 function App() {
   return (
@@ -78,10 +69,21 @@ function App() {
                 </PrivateRoute>
               }
             />
+            <Route
+              path="/activity"
+              element={
+                <PrivateRoute>
+                  <ActivityHistory />
+                </PrivateRoute>
+              }
+            />
             
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/users" element={<RegisteredUsers />} />
+            <Route path="/admin/cccd" element={<PreVerifiedCCCD />} />
+            <Route path="/admin/services" element={<ServiceRequests />} />
           </Routes>
         </Router>
       </SnackbarProvider>

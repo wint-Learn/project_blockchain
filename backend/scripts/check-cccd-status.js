@@ -1,14 +1,14 @@
 require('dotenv').config();
 const { Pool } = require('pg');
-const ethers = require('ethers');
+const crypto = require('crypto');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://postgres:1@localhost:5432/identity_db'
 });
 
-async function checkCCCDStatus() {
+async function checkCCCD() {
   const cccdNumber = '036202012345';
-  const cccdHash = ethers.keccak256(ethers.toUtf8Bytes(cccdNumber)); // ✅ Use Keccak256 like backend
+  const cccdHash = '0x' + crypto.createHash('sha256').update(cccdNumber).digest('hex'); // ✅ Use SHA256 like backend
   
   console.log('🔍 Checking CCCD:', cccdNumber);
   console.log('📋 CCCD Hash:', cccdHash);

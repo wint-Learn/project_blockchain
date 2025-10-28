@@ -165,7 +165,7 @@ app.locals.logger = logger;
 
 // ============ ROUTES ============
 
-let healthRoutes, didRoutes, authRoutes, adminRoutes, verifyRoutes, serviceRoutes, servicesRoutes, userRoutes;
+let healthRoutes, didRoutes, authRoutes, adminRoutes, verifyRoutes, serviceRoutes, servicesRoutes, userRoutes, activityRoutes;
 try {
   healthRoutes = require('./routes/health.routes');
   didRoutes = require('./routes/did.routes');
@@ -175,6 +175,7 @@ try {
   serviceRoutes = require('./routes/service.routes'); // Legacy route (wrapper for Phase 2)
   servicesRoutes = require('./routes/services.routes'); // 🆕 Public Services routes (Phase 2)
   userRoutes = require('./routes/user.routes'); // User routes
+  activityRoutes = require('./routes/activity.routes'); // Activity routes
   logger.info('All routes loaded successfully');
 } catch (error) {
   logger.error('Error loading routes:', error.message);
@@ -188,25 +189,37 @@ app.use('/api/did', didRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/verify', verifyRoutes);
-app.use('/api/services', serviceRoutes); // Legacy routes (wrapper)
+app.use('/api/services', servicesRoutes); // 🆕 Phase 2 public services routes
+app.use('/api/services', serviceRoutes); // Legacy routes (wrapper - fallback)
 app.use('/api/user', userRoutes); // User routes
+app.use('/api/activity', activityRoutes); // Activity routes
 
 // Backward compatibility
-const authController = require('./controllers/auth');
-const { registerSchema, loginSchema, validateRequest } = require('./middleware/validation-schemas');
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: 'Too many authentication attempts, please try again later.',
-  skipSuccessfulRequests: true,
-});
-app.post('/api/register', authLimiter, validateRequest(registerSchema), authController.register);
-app.post('/api/login', authLimiter, validateRequest(loginSchema), authController.login);
+try {
+  const authController = require('./controllers/auth/index');
+  const { registerSchema, loginSchema, validateRequest } = require('./middleware/validation-schemas');
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: 'Too many authentication attempts, please try again later.',
+    skipSuccessfulRequests: true,
+  });
+  app.post('/api/register', authLimiter, validateRequest(registerSchema), authController.register);
+  app.post('/api/login', authLimiter, validateRequest(loginSchema), authController.login);
+  logger.info('Backward compatibility routes loaded');
+} catch (error) {
+  logger.warn('Backward compatibility routes skipped:', error.message);
+}
 
 // Forward /api/logs to admin routes
-const adminController = require('./controllers/admin');
-const { auditMiddleware } = require('./middleware/audit-middleware');
-app.get('/api/logs', auditMiddleware('view_logs', (req) => req.query.address || 'all'), adminController.getLoginLogs);
+try {
+  const logsController = require('./controllers/admin/logs.controller');
+  const { auditMiddleware } = require('./middleware/audit-middleware');
+  app.get('/api/logs', auditMiddleware('view_logs', (req) => req.query.address || 'all'), logsController.getLoginLogs);
+  logger.info('Admin logs route loaded');
+} catch (error) {
+  logger.warn('Admin logs route skipped:', error.message);
+}
 
 // ============ ERROR HANDLING ============
 
@@ -237,6 +250,8 @@ app.use((err, req, res, next) => {
 });
 
 // ============ START SERVER ============
+
+logger.info('About to start server on port', { port });
 
 app.listen(port, '0.0.0.0', () => {
   logger.info(`Backend running on port ${port}`);

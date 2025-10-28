@@ -21,7 +21,7 @@ export default function RegisterMetaMask() {
     const navigate = useNavigate();
     const location = useLocation();
     const { enqueueSnackbar } = useSnackbar();
-    const { account, connect, isConnected, signMessage } = useMetaMask();
+    const { signMessage } = useMetaMask();
 
     // Get verification token + auto-filled citizen info from Verify page
     const verificationToken = location.state?.verificationToken;
@@ -44,6 +44,7 @@ export default function RegisterMetaMask() {
     const [loading, setLoading] = useState(false);
     const [showQR, setShowQR] = useState(false);
     const [useExistingWallet, setUseExistingWallet] = useState(false); // 🆕 Option to use existing wallet
+    const [selectedAccount, setSelectedAccount] = useState<string>(''); // 🆕 Selected account from MetaMask
     const [walletInfo, setWalletInfo] = useState<{
         qrCode: string;
         address: string;
@@ -72,6 +73,49 @@ export default function RegisterMetaMask() {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
+    // 🆕 Connect MetaMask and let user select account in MetaMask popup
+    const handleConnectMetaMask = async () => {
+        const { ethereum } = window as any;
+
+        if (!ethereum || !ethereum.isMetaMask) {
+            enqueueSnackbar('MetaMask chưa được cài đặt', { variant: 'error' });
+            return;
+        }
+
+        try {
+            setLoading(true);
+            
+            // Request permissions - this will show MetaMask's account selector popup
+            await ethereum.request({
+                method: 'wallet_requestPermissions',
+                params: [{ eth_accounts: {} }],
+            });
+
+            // After user selects account, get the selected account
+            const accounts = await ethereum.request({ method: 'eth_accounts' });
+            
+            if (accounts.length === 0) {
+                enqueueSnackbar('Không có ví nào được chọn', { variant: 'warning' });
+                setLoading(false);
+                return;
+            }
+
+            const selectedAccount = accounts[0]; // User's selected account from MetaMask popup
+            setSelectedAccount(selectedAccount);
+            setLoading(false);
+            
+            enqueueSnackbar(`✅ Đã chọn ví: ${selectedAccount.substring(0, 10)}...`, { variant: 'success' });
+        } catch (error: any) {
+            console.error('Error connecting MetaMask:', error);
+            if (error.code === 4001) {
+                enqueueSnackbar('Bạn đã từ chối kết nối MetaMask', { variant: 'warning' });
+            } else {
+                enqueueSnackbar('Lỗi kết nối MetaMask', { variant: 'error' });
+            }
+            setLoading(false);
+        }
+    };
+
     const handleRegister = async () => {
         // Validation
         if (!formData.cccdNumber || !formData.fullName || !formData.dateOfBirth ||
@@ -80,29 +124,23 @@ export default function RegisterMetaMask() {
             return;
         }
 
+        // If user wants to use existing wallet but hasn't selected one yet
+        if (useExistingWallet && !selectedAccount) {
+            enqueueSnackbar('Vui lòng chọn ví MetaMask', { variant: 'warning' });
+            return;
+        }
+
         setLoading(true);
         try {
             console.log('🔍 DEBUG: useExistingWallet =', useExistingWallet);
+            console.log('🔍 DEBUG: selectedAccount =', selectedAccount);
             
-            let walletAddress = null;
             let signature = null;
 
-            // If user wants to use existing wallet, connect MetaMask and sign message
-            if (useExistingWallet) {
-                console.log('✅ User chose to use existing wallet - connecting MetaMask...');
-                if (!isConnected) {
-                    enqueueSnackbar('Đang kết nối MetaMask...', { variant: 'info' });
-                    walletAddress = await connect();
-
-                    if (!walletAddress) {
-                        enqueueSnackbar('Không thể kết nối MetaMask', { variant: 'error' });
-                        setLoading(false);
-                        return;
-                    }
-                } else {
-                    walletAddress = account;
-                }
-
+            // If user wants to use existing wallet, sign message with selected account
+            if (useExistingWallet && selectedAccount) {
+                console.log('✅ User chose to use existing wallet:', selectedAccount);
+                
                 // Sign message to prove wallet ownership and recover public key
                 try {
                     enqueueSnackbar('Vui lòng ký xác nhận trong MetaMask...', { variant: 'info' });
@@ -127,13 +165,13 @@ export default function RegisterMetaMask() {
             };
 
             console.log('🔍 DEBUG: Before adding wallet fields, useExistingWallet =', useExistingWallet);
-            console.log('🔍 DEBUG: walletAddress =', walletAddress);
+            console.log('🔍 DEBUG: selectedAccount =', selectedAccount);
             console.log('🔍 DEBUG: signature =', signature ? 'EXISTS' : 'NULL');
 
             // Only add walletAddress and signature if user wants to use existing wallet
-            if (useExistingWallet && walletAddress && signature) {
+            if (useExistingWallet && selectedAccount && signature) {
                 console.log('✅ Adding walletAddress and signature to request');
-                requestData.walletAddress = walletAddress;
+                requestData.walletAddress = selectedAccount;
                 requestData.signature = signature;
             } else {
                 console.log('❌ NOT adding walletAddress - auto-gen wallet will be used');
@@ -345,23 +383,71 @@ export default function RegisterMetaMask() {
                             control={
                                 <Checkbox
                                     checked={useExistingWallet}
-                                    onChange={(e) => setUseExistingWallet(e.target.checked)}
+                                    onChange={(e) => {
+                                        setUseExistingWallet(e.target.checked);
+                                        if (!e.target.checked) {
+                                            // Reset account selection when unchecked
+                                            setSelectedAccount('');
+                                        }
+                                    }}
                                     disabled={loading}
                                 />
                             }
                             label={
                                 <Box>
                                     <Typography variant="body2" fontWeight="bold">
-                                        Sử dụng ví MetaMask hiện tại (Ganache account)
+                                        Sử dụng ví MetaMask có sẵn
                                     </Typography>
                                     <Typography variant="caption" color="text.secondary">
                                         {useExistingWallet
-                                            ? '✅ Sẽ dùng ví đang kết nối. Không cần import ví mới.'
+                                            ? '✅ Sẽ chọn ví từ MetaMask. Không cần import ví mới.'
                                             : 'Backend sẽ tạo ví mới và bạn cần import vào MetaMask.'}
                                     </Typography>
                                 </Box>
                             }
                         />
+
+                        {/* 🆕 Show button to connect MetaMask */}
+                        {useExistingWallet && !selectedAccount && (
+                            <Box sx={{ mt: 2 }}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={handleConnectMetaMask}
+                                    disabled={loading}
+                                    fullWidth
+                                >
+                                    Chọn ví từ MetaMask
+                                </Button>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, textAlign: 'center' }}>
+                                    MetaMask sẽ hiển thị danh sách ví để bạn chọn
+                                </Typography>
+                            </Box>
+                        )}
+
+                        {/* 🆕 Show selected account */}
+                        {useExistingWallet && selectedAccount && (
+                            <Box sx={{ mt: 2 }}>
+                                <Alert severity="success" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Box sx={{ flex: 1 }}>
+                                        <Typography variant="body2" fontWeight="bold">
+                                            Ví đã chọn
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                                            {selectedAccount}
+                                        </Typography>
+                                    </Box>
+                                </Alert>
+                                <Button
+                                    variant="text"
+                                    onClick={handleConnectMetaMask}
+                                    disabled={loading}
+                                    size="small"
+                                    sx={{ mt: 1 }}
+                                >
+                                    🔄 Chọn ví khác
+                                </Button>
+                            </Box>
+                        )}
                     </Box>
 
                     <Button
@@ -369,11 +455,18 @@ export default function RegisterMetaMask() {
                         variant="contained"
                         size="large"
                         onClick={handleRegister}
-                        disabled={loading || !verificationToken}
+                        disabled={loading || !verificationToken || (useExistingWallet && !selectedAccount)}
                         sx={{ mt: 4 }}
                     >
                         {loading ? <CircularProgress size={24} /> : 'Đăng Ký DID'}
                     </Button>
+
+                    {/* 🆕 Show helper text if user needs to select wallet */}
+                    {useExistingWallet && !selectedAccount && (
+                        <Alert severity="info" sx={{ mt: 2 }}>
+                            Vui lòng kết nối MetaMask và chọn ví trước khi đăng ký
+                        </Alert>
+                    )}
 
                     <Button
                         fullWidth

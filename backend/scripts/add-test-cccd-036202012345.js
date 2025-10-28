@@ -1,18 +1,16 @@
 require('dotenv').config();
 const { Pool } = require('pg');
-const ethers = require('ethers');
+const crypto = require('crypto');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || 'postgres://postgres:1@localhost:5432/identity_db'
 });
 
 async function addTestCCCD() {
-  console.log('📦 Adding test CCCD: 036202012345');
-  console.log('');
-  
   const cccdNumber = '036202012345';
-  const cccdHash = ethers.keccak256(ethers.toUtf8Bytes(cccdNumber)); // ✅ Use Keccak256 like backend
-  const phoneNumber = '0901234567';
+  const phoneNumber = '0987654321'; // Mock phone
+  
+  const cccdHash = '0x' + crypto.createHash('sha256').update(cccdNumber).digest('hex'); // ✅ Use SHA256 like backend
   
   console.log('📋 Details:');
   console.log('  CCCD Number:', cccdNumber);

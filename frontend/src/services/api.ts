@@ -183,14 +183,15 @@ export const listServices = async (category?: string) => {
 };
 
 export const requestService = async (data: {
+  walletAddress: string;
   serviceType: string;
   serviceData: any;
 }) => {
-  return api.post(`/api/services/request`, data);
+  return api.post(`/services/request`, data);
 };
 
 export const getMyServices = async (userAddress: string) => {
-  return api.get('/services/my-services', { params: { userAddress } });
+  return api.get('/services/my-services', { params: { walletAddress: userAddress } });
 };
 
 export default api;

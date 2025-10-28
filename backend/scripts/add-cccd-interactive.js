@@ -6,7 +6,7 @@
 
 require('dotenv').config();
 const { Pool } = require('pg');
-const ethers = require('ethers');
+const crypto = require('crypto');
 const readline = require('readline');
 
 const pool = new Pool({
@@ -49,8 +49,8 @@ async function addCCCD() {
     const placeOfOrigin = await question('8️⃣  Quê quán (optional): ');
     const placeOfResidence = await question('9️⃣  Nơi thường trú (optional): ');
 
-    // 2. Calculate hash (Keccak256 - compatible with Ethereum)
-    const cccdHash = ethers.keccak256(ethers.toUtf8Bytes(cccdNumber));
+    // 2. Calculate hash (SHA256)
+    const cccdHash = '0x' + crypto.createHash('sha256').update(cccdNumber).digest('hex');
 
     console.log('\n═══════════════════════════════════════════════════════');
     console.log('📋 XÁC NHẬN THÔNG TIN');

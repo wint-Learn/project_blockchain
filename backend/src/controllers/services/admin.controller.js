@@ -69,27 +69,24 @@ async function approveRequest(req, res) {
   
   try {
     const { id } = req.params;
-    const { adminAddress } = req.body;
     
-    if (!adminAddress) {
-      return res.status(400).json({
+    // Backend tự động dùng admin wallet từ .env
+    // Không cần frontend gửi adminAddress nữa
+    const adminPrivateKey = process.env.ADMIN_WALLET_PRIVATE_KEY_1;
+    
+    if (!adminPrivateKey) {
+      return res.status(500).json({
         success: false,
-        message: 'Thiếu địa chỉ ví admin',
+        message: 'Admin wallet chưa được cấu hình',
       });
     }
     
-    // Kiểm tra admin role
-    // Hardcode admin wallet cho demo (Ganache account #0)
-    const ADMIN_WALLETS = [
-      '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // Ganache account #0
-    ];
+    // Lấy admin address từ private key
+    const provider = req.app.locals.provider;
+    const adminWallet = new ethers.Wallet(adminPrivateKey, provider);
+    const adminAddress = adminWallet.address;
     
-    if (!ADMIN_WALLETS.includes(adminAddress.toLowerCase())) {
-      return res.status(403).json({
-        success: false,
-        message: 'Bạn không có quyền admin',
-      });
-    }
+    logger.info(`🔐 Admin wallet: ${adminAddress}`);
     
     // Lấy thông tin yêu cầu
     const requestQuery = await pool.query(
@@ -120,16 +117,8 @@ async function approveRequest(req, res) {
     logger.info(`🔗 Đang ghi dịch vụ lên blockchain: Request ID=${id}`);
     
     try {
-      // Tạo wallet signer với admin private key
-      const provider = req.app.locals.provider;
-      const adminPrivateKey = process.env.ADMIN_WALLET_PRIVATE_KEY_1;
-      
-      if (!adminPrivateKey) {
-        throw new Error('ADMIN_WALLET_PRIVATE_KEY_1 not configured');
-      }
-      
-      const wallet = new ethers.Wallet(adminPrivateKey, provider);
-      const contractWithSigner = contract.connect(wallet);
+      // Admin wallet đã được tạo ở trên
+      const contractWithSigner = contract.connect(adminWallet);
       
       // Convert cccd_number_hash to bytes32
       const cccdHashBytes32 = request.cccd_number_hash;
@@ -237,27 +226,29 @@ async function rejectRequest(req, res) {
   
   try {
     const { id } = req.params;
-    const { adminAddress, reason } = req.body;
+    const { rejectionReason } = req.body;
     
-    if (!adminAddress || !reason) {
+    if (!rejectionReason) {
       return res.status(400).json({
         success: false,
-        message: 'Thiếu thông tin admin hoặc lý do từ chối',
+        message: 'Thiếu lý do từ chối',
       });
     }
     
-    // Kiểm tra admin role
-    // Hardcode admin wallet cho demo (Ganache account #0)
-    const ADMIN_WALLETS = [
-      '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', // Ganache account #0
-    ];
+    // Backend tự động dùng admin wallet từ .env
+    const adminPrivateKey = process.env.ADMIN_WALLET_PRIVATE_KEY_1;
     
-    if (!ADMIN_WALLETS.includes(adminAddress.toLowerCase())) {
-      return res.status(403).json({
+    if (!adminPrivateKey) {
+      return res.status(500).json({
         success: false,
-        message: 'Bạn không có quyền admin',
+        message: 'Admin wallet chưa được cấu hình',
       });
     }
+    
+    // Lấy admin address từ private key
+    const provider = req.app.locals.provider;
+    const adminWallet = new ethers.Wallet(adminPrivateKey, provider);
+    const adminAddress = adminWallet.address;
     
     // Kiểm tra yêu cầu
     const requestQuery = await pool.query(
@@ -293,12 +284,12 @@ async function rejectRequest(req, res) {
     `;
     
     const result = await pool.query(updateQuery, [
-      reason,
+      rejectionReason,
       adminAddress.toLowerCase(),
       id,
     ]);
     
-    logger.info(`❌ Đã từ chối yêu cầu ID=${id}, Lý do: ${reason}`);
+    logger.info(`❌ Đã từ chối yêu cầu ID=${id}, Lý do: ${rejectionReason}`);
     
     return res.json({
       success: true,

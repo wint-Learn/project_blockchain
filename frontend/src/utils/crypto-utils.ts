@@ -1,10 +1,13 @@
-import { keccak256, toUtf8Bytes } from 'ethers';
+import { sha256 } from 'ethers';
 
 /**
- * Hash QR data từ CCCD bằng keccak256 (giống backend)
+ * Hash QR data từ CCCD bằng SHA256 (giống backend)
  */
 export const hashCCCD = (qrData: string): string => {
-  return keccak256(toUtf8Bytes(qrData));
+  // Convert string to bytes then hash with SHA256
+  const encoder = new TextEncoder();
+  const data = encoder.encode(qrData);
+  return sha256(data);
 };
 
 /**

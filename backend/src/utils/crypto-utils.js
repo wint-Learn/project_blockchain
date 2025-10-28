@@ -57,22 +57,20 @@ function extractCCCDNumber(qrData) {
 /**
  * Hash CCCD number only (để check duplicate)
  * @param {string} cccdNumber - CCCD number
- * @returns {string} - Keccak256 hash of CCCD number
+ * @returns {string} - SHA256 hash of CCCD number
  */
 function hashCCCDNumber(cccdNumber) {
-  const ethers = require('ethers');
-  return ethers.keccak256(ethers.toUtf8Bytes(cccdNumber));
+  return '0x' + crypto.createHash('sha256').update(cccdNumber).digest('hex');
 }
 
 /**
  * Hash full QR data (để lưu on-chain - có thể update khi thông tin thay đổi)
  * @param {string} qrData - Raw QR data string from CCCD
- * @returns {string} - Keccak256 hash
+ * @returns {string} - SHA256 hash
  */
 function hashCCCD(qrData) {
-  const ethers = require('ethers');
-  // Hash raw QR data string directly
-  return ethers.keccak256(ethers.toUtf8Bytes(qrData));
+  // Hash raw QR data string directly using SHA256
+  return '0x' + crypto.createHash('sha256').update(qrData).digest('hex');
 }
 
 module.exports = { encrypt, decrypt, hashCCCD, hashCCCDNumber, extractCCCDNumber };
