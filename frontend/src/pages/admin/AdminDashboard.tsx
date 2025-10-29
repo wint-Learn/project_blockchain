@@ -79,7 +79,7 @@ const AdminDashboard = () => {
     try {
       const [statsRes, requestsRes] = await Promise.all([
         getDashboardStats(),
-        api.get('/api/admin/services/recent?limit=10'),
+        api.get('/admin/services/recent?limit=10'),
       ]);
 
       if (statsRes.data.success) {
@@ -127,7 +127,7 @@ const AdminDashboard = () => {
     return (
       <AdminLayout>
         <Container maxWidth="xl" sx={{ py: 3 }}>
-          <LoadingSpinner message="Đang tải dashboard..." />
+          <LoadingSpinner message="Đang tải dữ liệu..." />
         </Container>
       </AdminLayout>
     );
@@ -153,7 +153,7 @@ const AdminDashboard = () => {
     <AdminLayout>
       <Container maxWidth="xl" sx={{ py: 3 }}>
         <Typography variant="h5" sx={{ mb: 3 }}>
-          Dashboard Admin
+          Trang chủ quản trị
         </Typography>
 
         {/* Stats Cards */}

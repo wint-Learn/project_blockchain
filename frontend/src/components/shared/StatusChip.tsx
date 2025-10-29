@@ -1,7 +1,7 @@
 import { Chip } from '@mui/material';
 
 interface StatusChipProps {
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'active' | 'inactive' | 'blacklisted';
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'active' | 'inactive' | 'blacklisted' | 'verified' | 'claimed';
   label?: string;
 }
 
@@ -13,6 +13,8 @@ const statusConfig = {
   active: { color: 'success' as const, label: 'Hoạt động' },
   inactive: { color: 'default' as const, label: 'Không hoạt động' },
   blacklisted: { color: 'error' as const, label: 'Đã khóa' },
+  verified: { color: 'info' as const, label: 'Đã xác minh' },
+  claimed: { color: 'success' as const, label: 'Đã liên kết' },
 };
 
 const StatusChip = ({ status, label }: StatusChipProps) => {

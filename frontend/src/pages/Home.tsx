@@ -36,7 +36,7 @@ export default function Home() {
                 onClick={() => navigate('/dashboard')}
                 sx={{ px: 4, py: 1.5 }}
               >
-                Vào Dashboard
+                Vào Trang chủ
               </Button>
             ) : (
               // Nếu chưa đăng nhập, hiển thị nút Xác thực/Đăng nhập

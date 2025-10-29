@@ -18,13 +18,59 @@ import {
   TextField,
   Tabs,
   Tab,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
-import { Refresh, CheckCircle, Cancel } from '@mui/icons-material';
+import { Refresh, CheckCircle, Cancel, AccountBalanceWallet } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
+import { ethers } from 'ethers';
 import AdminLayout from '../../components/layout/AdminLayout';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import EmptyState from '../../components/shared/EmptyState';
 import StatusChip from '../../components/shared/StatusChip';
+import api from '../../services/api';
+import { useMetaMask } from '../../hooks/useMetaMask';
+
+// Contract addresses from .env
+const SERVICE_CONTRACT_ADDRESS = '0x09635F643e140090A9A8Dcd712eD6285858ceBef';
+
+// Simplified ABI - only registerService function needed for approval
+const SERVICE_CONTRACT_ABI = [
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_userAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "_cccdHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "string",
+        "name": "_serviceType",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "_data",
+        "type": "string"
+      }
+    ],
+    "name": "registerService",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
 
 interface ServiceRequest {
   id: number;
@@ -36,6 +82,8 @@ interface ServiceRequest {
   tx_hash?: string;
   service_id?: number;
   full_name?: string;
+  cccd_number?: string;
+  requested_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -69,6 +117,7 @@ const serviceTypeLabels: { [key: string]: string } = {
 
 const ServiceRequests = () => {
   const { enqueueSnackbar } = useSnackbar();
+  const { account, isConnected, connect } = useMetaMask();
 
   const [tabValue, setTabValue] = useState(0);
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
@@ -115,27 +164,97 @@ const ServiceRequests = () => {
   };
 
   const handleApprove = async (request: ServiceRequest) => {
+    // Check MetaMask connection
+    if (!isConnected || !account) {
+      enqueueSnackbar('Vui lòng kết nối MetaMask trước', { variant: 'warning' });
+      try {
+        await connect();
+        return; // User will need to click approve again after connecting
+      } catch (error) {
+        enqueueSnackbar('Không thể kết nối MetaMask', { variant: 'error' });
+        return;
+      }
+    }
+
     setProcessing(true);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/services/admin/approve/${request.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({}), // Backend tự động dùng admin wallet
+      // 1. Get provider from MetaMask
+      if (!window.ethereum) {
+        throw new Error('MetaMask không được cài đặt');
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // 2. Create contract instance with signer
+      const contract = new ethers.Contract(
+        SERVICE_CONTRACT_ADDRESS,
+        SERVICE_CONTRACT_ABI,
+        signer
+      );
+
+      // 3. Prepare transaction data
+      const cccdNumber = request.cccd_number || request.service_data?.cccd_number || '';
+      if (!cccdNumber) {
+        throw new Error('Không tìm thấy số CCCD trong yêu cầu');
+      }
+      
+      const cccdHash = ethers.keccak256(ethers.toUtf8Bytes(cccdNumber));
+      const serviceData = JSON.stringify({
+        cccd_number: cccdNumber,
+        full_name: request.full_name || request.service_data?.full_name || '',
+        requested_at: request.requested_at || request.created_at
       });
 
-      const data = await response.json();
+      enqueueSnackbar('Đang chờ xác nhận từ MetaMask...', { variant: 'info' });
 
-      if (data.success) {
-        enqueueSnackbar('Đã duyệt yêu cầu thành công!', { variant: 'success' });
+      // 4. Call smart contract from frontend (MetaMask will pop up)
+      const tx = await contract.registerService(
+        request.wallet_address,
+        cccdHash,
+        request.service_type,
+        serviceData
+      );
+
+      enqueueSnackbar('Đang xử lý giao dịch trên blockchain...', { variant: 'info' });
+
+      // 5. Wait for transaction confirmation
+      const receipt = await tx.wait();
+
+      // 6. Send transaction hash to backend for database update
+      const response = await api.post(`/services/admin/save-approval/${request.id}`, {
+        tx_hash: receipt.hash,
+        block_number: receipt.blockNumber,
+        gas_used: receipt.gasUsed.toString(),
+        admin_address: account
+      });
+
+      if (response.data.success) {
+        enqueueSnackbar('✅ Đã duyệt yêu cầu thành công! Gas đã trừ từ ví MetaMask của bạn.', { 
+          variant: 'success',
+          autoHideDuration: 5000 
+        });
         fetchRequests();
       } else {
-        enqueueSnackbar(data.message || 'Không thể duyệt yêu cầu', { variant: 'error' });
+        enqueueSnackbar(response.data.message || 'Không thể lưu kết quả', { variant: 'error' });
       }
     } catch (err: any) {
-      enqueueSnackbar(err.message || 'Không thể duyệt yêu cầu', { variant: 'error' });
+      console.error('Approve error:', err);
+      
+      // Handle specific MetaMask errors
+      if (err.code === 4001) {
+        enqueueSnackbar('Bạn đã từ chối giao dịch trong MetaMask', { variant: 'warning' });
+      } else if (err.code === -32002) {
+        enqueueSnackbar('Vui lòng mở MetaMask và xác nhận yêu cầu', { variant: 'info' });
+      } else if (err.message?.includes('insufficient funds')) {
+        enqueueSnackbar('Không đủ ETH để trả gas. Vui lòng nạp thêm vào ví MetaMask.', { variant: 'error' });
+      } else {
+        enqueueSnackbar(
+          err.response?.data?.message || err.message || 'Không thể duyệt yêu cầu', 
+          { variant: 'error' }
+        );
+      }
     } finally {
       setProcessing(false);
     }
@@ -158,27 +277,19 @@ const ServiceRequests = () => {
     setProcessing(true);
 
     try {
-      const response = await fetch(`http://localhost:3000/api/services/admin/reject/${selectedRequest.id}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          rejectionReason: rejectionReason,
-        }),
+      const response = await api.post(`/services/admin/reject/${selectedRequest.id}`, {
+        rejectionReason: rejectionReason,
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (response.data.success) {
         enqueueSnackbar('Đã từ chối yêu cầu', { variant: 'success' });
         setRejectDialogOpen(false);
         fetchRequests();
       } else {
-        enqueueSnackbar(data.message || 'Không thể từ chối yêu cầu', { variant: 'error' });
+        enqueueSnackbar(response.data.message || 'Không thể từ chối yêu cầu', { variant: 'error' });
       }
     } catch (err: any) {
-      enqueueSnackbar(err.message || 'Không thể từ chối yêu cầu', { variant: 'error' });
+      enqueueSnackbar(err.response?.data?.message || 'Không thể từ chối yêu cầu', { variant: 'error' });
     } finally {
       setProcessing(false);
     }
@@ -242,7 +353,7 @@ const ServiceRequests = () => {
                 <TableBody>
                   {filteredRequests.map((request) => (
                     <TableRow key={request.id} hover>
-                      <TableCell>#{request.id}</TableCell>
+                      <TableCell>{request.id}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight="bold">
                           {request.full_name || 'N/A'}
@@ -320,7 +431,7 @@ const ServiceRequests = () => {
                 <TableBody>
                   {requests.map((request) => (
                     <TableRow key={request.id} hover>
-                      <TableCell>#{request.id}</TableCell>
+                      <TableCell>{request.id}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight="bold">
                           {request.full_name || 'N/A'}
@@ -374,7 +485,7 @@ const ServiceRequests = () => {
 
       {/* Reject Dialog */}
       <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Từ chối yêu cầu #{selectedRequest?.id}</DialogTitle>
+        <DialogTitle>Từ chối yêu cầu {selectedRequest?.id}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus

@@ -66,19 +66,9 @@ async function getProfile(req, res) {
       }
     }
 
-    // 3. Lấy anomaly score từ login_logs (nếu có)
-    let anomalyScore = 0;
-    const anomalyQuery = await pool.query(
-      `SELECT AVG(anomaly_score) as avg_score 
-       FROM login_logs 
-       WHERE wallet_address = $1 
-       AND timestamp > NOW() - INTERVAL '7 days'`,
-      [address]
-    );
-
-    if (anomalyQuery.rows.length > 0 && anomalyQuery.rows[0].avg_score) {
-      anomalyScore = parseFloat(anomalyQuery.rows[0].avg_score);
-    }
+    // 3. Note: anomalyScore removed since login_logs no longer has anomaly_score column
+    // Anomaly detection is now handled automatically in loginLogger
+    const anomalyScore = 0;
 
     // 4. Return combined data
     return res.json({

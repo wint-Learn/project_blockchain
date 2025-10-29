@@ -40,20 +40,20 @@ async function getDashboardStats(pool, logger) {
       stats.preVerified[row.status] = parseInt(row.count);
     });
     
-    // Anomaly alerts (last 24h)
+    // Anomaly alerts (last 24h) - using is_anomaly instead of anomaly_score
     const anomalyAlerts = await pool.query(
       `SELECT COUNT(*) FROM login_logs 
-       WHERE anomaly_score > 0.5 
-       AND timestamp > NOW() - INTERVAL '24 hours'`
+       WHERE is_anomaly = true 
+       AND login_time > NOW() - INTERVAL '24 hours'`
     );
     stats.anomalyAlerts = parseInt(anomalyAlerts.rows[0].count);
     
-    // Recent logins (last 7 days, grouped by date)
+    // Recent logins (last 7 days, grouped by date) - using login_time instead of timestamp
     const recentLogins = await pool.query(
-      `SELECT DATE(timestamp) as date, COUNT(*) as count 
+      `SELECT DATE(login_time) as date, COUNT(*) as count 
        FROM login_logs 
-       WHERE timestamp > NOW() - INTERVAL '7 days'
-       GROUP BY DATE(timestamp)
+       WHERE login_time > NOW() - INTERVAL '7 days'
+       GROUP BY DATE(login_time)
        ORDER BY date ASC`
     );
     stats.recentLogins = recentLogins.rows;

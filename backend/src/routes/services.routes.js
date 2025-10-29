@@ -50,10 +50,17 @@ router.get('/admin/all', adminController.getAllRequests);
 
 /**
  * POST /api/services/admin/approve/:id
- * Admin phê duyệt yêu cầu
+ * Admin phê duyệt yêu cầu (backend auto-sign) - OLD METHOD
  * Body: { adminAddress }
  */
 router.post('/admin/approve/:id', adminController.approveRequest);
+
+/**
+ * POST /api/services/admin/save-approval/:id
+ * Lưu kết quả phê duyệt từ MetaMask (frontend đã ký transaction)
+ * Body: { tx_hash, block_number, gas_used, admin_address }
+ */
+router.post('/admin/save-approval/:id', adminController.saveApproval);
 
 /**
  * POST /api/services/admin/reject/:id

@@ -17,6 +17,8 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import ServiceRequests from './pages/admin/ServiceRequests';
 import RegisteredUsers from './pages/admin/RegisteredUsers';
 import PreVerifiedCCCD from './pages/admin/PreVerifiedCCCD';
+import ActivityLogs from './pages/admin/ActivityLogs';
+import BlockchainExplorer from './pages/admin/BlockchainExplorer';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -84,6 +86,8 @@ function App() {
             <Route path="/admin/users" element={<RegisteredUsers />} />
             <Route path="/admin/cccd" element={<PreVerifiedCCCD />} />
             <Route path="/admin/services" element={<ServiceRequests />} />
+            <Route path="/admin/logs" element={<ActivityLogs />} />
+            <Route path="/admin/blockchain" element={<BlockchainExplorer />} />
           </Routes>
         </Router>
       </SnackbarProvider>

@@ -8,6 +8,8 @@ async function getRecentRequests(req, res) {
   const limit = req.query.limit || 10;
 
   try {
+    logger.info('Fetching recent requests', { limit });
+    
     const query = `
       SELECT 
         sr.id,
@@ -17,12 +19,14 @@ async function getRecentRequests(req, res) {
         pv.full_name
       FROM service_requests sr
       LEFT JOIN users u ON sr.wallet_address = u.wallet_address
-      LEFT JOIN pre_verified_cccd pv ON u.cccd_hash = pv.cccd_hash
+      LEFT JOIN pre_verified_cccd pv ON u.cccd_number_hash = pv.cccd_number_hash
       ORDER BY sr.created_at DESC
       LIMIT $1
     `;
 
     const result = await pool.query(query, [limit]);
+    
+    logger.info('Recent requests fetched successfully', { count: result.rows.length });
 
     res.json({
       success: true,
@@ -32,7 +36,8 @@ async function getRecentRequests(req, res) {
     logger.error('Error fetching recent requests:', error);
     res.status(500).json({
       success: false,
-      message: 'Lỗi khi tải yêu cầu gần đây'
+      message: 'Lỗi khi tải yêu cầu gần đây',
+      error: error.message
     });
   }
 }

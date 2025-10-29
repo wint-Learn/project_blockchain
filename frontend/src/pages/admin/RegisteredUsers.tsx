@@ -169,7 +169,7 @@ const RegisteredUsers = () => {
                 <TableBody>
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id} hover>
-                      <TableCell>#{user.id}</TableCell>
+                      <TableCell>{user.id}</TableCell>
                       <TableCell>
                         <Typography variant="body2" fontWeight="bold">
                           {user.full_name || 'N/A'}
@@ -216,7 +216,7 @@ const RegisteredUsers = () => {
         {/* Detail Dialog */}
         <Dialog open={detailDialogOpen} onClose={handleCloseDetail} maxWidth="md" fullWidth>
           <DialogTitle>
-            <Typography variant="h6">Chi tiết người dùng #{selectedUser?.id}</Typography>
+            Chi tiết người dùng {selectedUser?.id}
           </DialogTitle>
           <DialogContent dividers>
             {selectedUser && (

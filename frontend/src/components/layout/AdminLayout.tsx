@@ -24,6 +24,7 @@ import {
   Badge as BadgeIcon,
   Assignment as AssignmentIcon,
   History as HistoryIcon,
+  AccountBalanceWallet as BlockchainIcon,
   ExitToApp as LogoutIcon,
   AdminPanelSettings,
 } from '@mui/icons-material';
@@ -47,7 +48,8 @@ const navItems: NavItem[] = [
   { label: 'Người dùng đã đăng ký', path: '/admin/users', icon: <PeopleIcon /> },
   { label: 'CCCD Pre-verified', path: '/admin/cccd', icon: <BadgeIcon /> },
   { label: 'Yêu cầu dịch vụ', path: '/admin/services', icon: <AssignmentIcon /> },
-  { label: 'Lịch sử hoạt động', path: '/admin/logs', icon: <HistoryIcon /> },
+  { label: 'Lịch sử đăng nhập', path: '/admin/logs', icon: <HistoryIcon /> },
+  { label: 'Blockchain Explorer', path: '/admin/blockchain', icon: <BlockchainIcon /> },
 ];
 
 const drawerWidth = 260;

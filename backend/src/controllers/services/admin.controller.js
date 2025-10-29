@@ -363,9 +363,91 @@ async function getAllRequests(req, res) {
   }
 }
 
+/**
+ * POST /api/services/admin/save-approval/:id
+ * Lưu kết quả phê duyệt từ MetaMask (frontend đã ký transaction)
+ */
+async function saveApproval(req, res) {
+  const pool = req.app.locals.pool;
+  const logger = req.app.locals.logger;
+  
+  try {
+    const { id } = req.params;
+    const { tx_hash, block_number, gas_used, admin_address } = req.body;
+    
+    if (!tx_hash) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu transaction hash',
+      });
+    }
+
+    // Kiểm tra yêu cầu tồn tại
+    const checkQuery = `
+      SELECT * FROM service_requests
+      WHERE id = $1
+    `;
+    const checkResult = await pool.query(checkQuery, [id]);
+
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Không tìm thấy yêu cầu',
+      });
+    }
+
+    const request = checkResult.rows[0];
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: `Yêu cầu đã được xử lý (${request.status})`,
+      });
+    }
+
+    // Cập nhật trạng thái trong database
+    const updateQuery = `
+      UPDATE service_requests
+      SET 
+        status = 'approved',
+        tx_hash = $1,
+        updated_at = NOW()
+      WHERE id = $2
+      RETURNING *
+    `;
+
+    const result = await pool.query(updateQuery, [tx_hash, id]);
+    const updatedRequest = result.rows[0];
+
+    logger.info(`✅ Service request ${id} approved via MetaMask`, {
+      tx_hash,
+      block_number,
+      gas_used,
+      admin_address,
+      wallet_address: request.wallet_address,
+      service_type: request.service_type,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Đã lưu kết quả phê duyệt thành công',
+      data: updatedRequest,
+    });
+
+  } catch (error) {
+    logger.error('❌ Save approval error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Lỗi khi lưu kết quả phê duyệt',
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   getPendingRequests,
   approveRequest,
   rejectRequest,
   getAllRequests,
+  saveApproval,
 };

@@ -17,7 +17,7 @@ async function detectAnomaly(pool, walletAddress, currentIp) {
       `SELECT COUNT(DISTINCT ip_address) as ip_count
        FROM login_logs
        WHERE wallet_address = $1 
-       AND timestamp > NOW() - INTERVAL '24 hours'`,
+       AND login_time > NOW() - INTERVAL '24 hours'`,
       [walletAddress]
     );
     const ipCount = parseInt(ipChangeResult.rows[0]?.ip_count || 0);
@@ -27,7 +27,7 @@ async function detectAnomaly(pool, walletAddress, currentIp) {
       `SELECT COUNT(*) as login_count
        FROM login_logs
        WHERE wallet_address = $1
-       AND timestamp > NOW() - INTERVAL '1 hour'`,
+       AND login_time > NOW() - INTERVAL '1 hour'`,
       [walletAddress]
     );
     const loginCount = parseInt(freqResult.rows[0]?.login_count || 0);

@@ -23,8 +23,18 @@ router.get('/users',
 );
 
 /**
+ * @route   GET /api/admin/login-logs
+ * @desc    Xem login logs với geolocation và anomaly detection
+ * @access  Admin
+ */
+router.get('/login-logs', 
+  auditMiddleware('view_login_logs', (req) => req.query.address || 'all'), 
+  adminController.getLoginLogs
+);
+
+/**
  * @route   GET /api/admin/logs
- * @desc    Xem login logs (với audit logging)
+ * @desc    Xem login logs (alias cho backward compatibility)
  * @access  Admin (cần thêm auth middleware sau)
  */
 router.get('/logs', 
