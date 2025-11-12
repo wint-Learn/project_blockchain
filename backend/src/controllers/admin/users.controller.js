@@ -37,7 +37,7 @@ async function getRegisteredUsers(req, res) {
     });
     
   } catch (error) {
-    logger.error('❌ Get registered users error:', error);
+    logger.error('Get registered users error:', error);
     return res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy danh sách người dùng',

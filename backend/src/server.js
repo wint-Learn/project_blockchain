@@ -20,8 +20,8 @@ app.use(helmet());
 
 // CORS
 const corsOptions = {
-  origin: process.env.CORS_ORIGINS 
-    ? process.env.CORS_ORIGINS.split(',') 
+  origin: process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
     : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   optionsSuccessStatus: 200,
@@ -78,8 +78,8 @@ pool.connect()
 
 // Blockchain setup
 // Use Ganache for development, Polygon for production
-const rpcUrl = process.env.NODE_ENV === 'production' 
-  ? process.env.POLYGON_RPC_URL 
+const rpcUrl = process.env.NODE_ENV === 'production'
+  ? process.env.POLYGON_RPC_URL
   : (process.env.LOCAL_RPC_URL || process.env.POLYGON_RPC_URL);
 
 logger.info(`Using RPC: ${rpcUrl}`);
@@ -125,11 +125,11 @@ try {
 let serviceContract;
 try {
   const serviceContractAddress = process.env.SERVICE_CONTRACT_ADDRESS;
-  
+
   if (serviceContractAddress && provider) {
     let serviceAbi;
     const SERVICE_JSON_PATH = path.resolve(__dirname, '../../blockchain/artifacts/contracts/ServiceRegistry.sol/ServiceRegistry.json');
-    
+
     if (fs.existsSync(SERVICE_JSON_PATH)) {
       serviceAbi = require(SERVICE_JSON_PATH).abi;
       logger.info('Loaded ServiceRegistry ABI from JSON file');
@@ -144,7 +144,7 @@ try {
         'event ServiceApproved(address indexed user, uint256 indexed serviceId, address approvedBy, uint256 timestamp)',
       ];
     }
-    
+
     serviceContract = new ethers.Contract(serviceContractAddress, serviceAbi, provider);
     logger.info('ServiceRegistry contract connected', { serviceContractAddress });
   } else {
@@ -242,8 +242,8 @@ app.use((err, req, res, next) => {
     body: req.body,
     ip: req.ip
   });
-  
-  res.status(err.status || 500).json({ 
+
+  res.status(err.status || 500).json({
     error: 'Internal server error',
     message: process.env.NODE_ENV === 'development' ? err.message : undefined
   });

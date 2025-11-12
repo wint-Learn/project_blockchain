@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Paper,
-  Typography,
-  Button,
-  Box,
-  Alert,
-  CircularProgress,
+  Container, Box, Typography, Button, Paper, Alert, CircularProgress
 } from '@mui/material';
 import { AccountBalanceWallet } from '@mui/icons-material';
 import { useMetaMask } from '../hooks/useMetaMask';
@@ -39,7 +33,7 @@ const LoginMetaMask: React.FC = () => {
       setError('');
       setUserClickedLogin(true);
 
-      // Step 1: Kết nối MetaMask
+      // 1: Kết nối MetaMask
       if (!isConnected) {
         setStep('connect');
         const address = await connect();
@@ -51,12 +45,12 @@ const LoginMetaMask: React.FC = () => {
         }
       }
 
-      // Step 2: Lấy message từ backend
+      // 2: Lấy message từ backend
       setStep('sign');
       const messageResponse = await getLoginMessage(account!);
       const message = messageResponse.data.message;
 
-      // Step 3: Ký message
+      // 3: Ký message
       const signature = await signMessage(message);
       
       if (!signature) {
@@ -65,18 +59,18 @@ const LoginMetaMask: React.FC = () => {
         return;
       }
 
-      // Step 4: Gửi signature và message lên backend
+      // 4: Gửi signature và message lên backend
       const loginResponse = await loginWithMetaMask({
         address: account!,
         signature,
         message, // CRITICAL: Phải gửi message đã ký để backend verify đúng
       });
 
-      // Step 5: Lưu user vào store
+      // 5: Lưu user vào store
       setUser(loginResponse.data.user);
       setStep('done');
 
-      // Step 6: Chuyển đến dashboard
+      // 6: Chuyển đến dashboard
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
@@ -84,10 +78,18 @@ const LoginMetaMask: React.FC = () => {
     } catch (err: any) {
       console.error('Login error:', err);
       
-      // Handle specific error cases
+      // Xử lý lỗi cụ thể từ backend
+      /*
+      Chi tiết xử lý lỗi:
+      - 404 USER_NOT_REGISTERED: Địa chỉ ví chưa đăng ký DID
+      - 401 INVALID_SIGNATURE: Chữ ký không hợp lệ
+      - 401: Xác thực thất bại chung
+      - Các lỗi khác: Hiển thị thông báo lỗi từ backend nếu có, hoặc lỗi chung
+      */
+
       if (err.response?.status === 404 || err.response?.data?.code === 'USER_NOT_REGISTERED') {
         setError('Địa chỉ ví này chưa đăng ký DID. Vui lòng đăng ký trước khi đăng nhập.');
-        // Auto redirect to register after 3 seconds
+        // Tự động chuyển đến trang đăng ký sau 3 giây
         setTimeout(() => {
           navigate('/verify');
         }, 3000);
@@ -110,6 +112,7 @@ const LoginMetaMask: React.FC = () => {
     }
   };
 
+  // Lấy thông điệp hiển thị theo bước hiện tại
   const getStepMessage = () => {
     switch (step) {
       case 'connect':
@@ -123,6 +126,7 @@ const LoginMetaMask: React.FC = () => {
     }
   };
 
+  // Nếu MetaMask chưa được cài đặt
   if (!isInstalled) {
     return (
       <Container maxWidth="sm" sx={{ mt: 8 }}>

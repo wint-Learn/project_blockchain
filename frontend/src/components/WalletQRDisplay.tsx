@@ -1,15 +1,7 @@
 import { useState } from 'react';
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  Alert,
-  IconButton,
-  Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, Box, Typography, Alert, IconButton, Tooltip
 } from '@mui/material';
 import {
   ContentCopy,
@@ -28,7 +20,6 @@ interface WalletQRDisplayProps {
 
 /**
  * Component hiển thị QR code và mnemonic sau khi đăng ký thành công
- * User scan QR để import ví vào MetaMask
  */
 const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, privateKey }: WalletQRDisplayProps) => {
   const [copiedMnemonic, setCopiedMnemonic] = useState(false);
@@ -67,7 +58,7 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
       <DialogTitle>
         🎉 Đăng Ký DID Thành Công!
       </DialogTitle>
-      
+
       <DialogContent>
         <Alert severity="success" sx={{ mb: 3 }}>
           <strong>Địa chỉ ví của bạn:</strong>
@@ -89,7 +80,7 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
             <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
               💻 Cách 1: Import bằng Private Key (Desktop MetaMask)
             </Typography>
-            
+
             <Alert severity="info" sx={{ mb: 2 }}>
               <Typography variant="body2">
                 <strong>Hướng dẫn import vào MetaMask:</strong>
@@ -103,10 +94,10 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
               </ol>
             </Alert>
 
-            <Box 
-              sx={{ 
-                p: 2, 
-                bgcolor: '#fff3e0', 
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: '#fff3e0',
                 borderRadius: 1,
                 fontFamily: 'monospace',
                 fontSize: '13px',
@@ -116,12 +107,12 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
               }}
             >
               <Typography variant="caption" color="error" sx={{ fontWeight: 'bold', display: 'block', mb: 1 }}>
-                ⚠️ PRIVATE KEY (Chỉ dùng cho development/testing):
+                PRIVATE KEY (Chỉ dùng cho development/testing):
               </Typography>
               {privateKey}
               <Tooltip title={copiedPrivateKey ? 'Đã copy!' : 'Copy private key'}>
-                <IconButton 
-                  size="small" 
+                <IconButton
+                  size="small"
                   onClick={handleCopyPrivateKey}
                   sx={{ position: 'absolute', top: 8, right: 8 }}
                 >
@@ -135,21 +126,21 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
           📱 Cách 2: Quét QR Code (Mobile MetaMask)
         </Typography>
-        
+
         <Box sx={{ textAlign: 'center', my: 3 }}>
-          <img 
-            src={qrCode} 
-            alt="Wallet QR Code" 
-            style={{ 
-              maxWidth: '300px', 
-              border: '1px solid #ddd', 
+          <img
+            src={qrCode}
+            alt="Wallet QR Code"
+            style={{
+              maxWidth: '300px',
+              border: '1px solid #ddd',
               borderRadius: '8px',
               padding: '10px',
-            }} 
+            }}
           />
           <Box sx={{ mt: 2 }}>
-            <Button 
-              startIcon={<Download />} 
+            <Button
+              startIcon={<Download />}
               onClick={handleDownloadQR}
               variant="outlined"
               size="small"
@@ -166,18 +157,18 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
         </Alert>
 
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-          💾 Cách 3: Lưu Seed Phrase (12 từ khôi phục)
+          Cách 3: Lưu Seed Phrase (12 từ khôi phục)
         </Typography>
-        
+
         <Alert severity="warning" sx={{ mb: 2 }}>
-          <strong>⚠️ Quan trọng:</strong> Ghi lại 12 từ này và giữ an toàn. 
+          <strong>⚠️ Quan trọng:</strong> Ghi lại 12 từ này và giữ an toàn.
           Đây là cách duy nhất để khôi phục ví nếu bạn mất điện thoại!
         </Alert>
 
-        <Box 
-          sx={{ 
-            p: 2, 
-            bgcolor: '#f5f5f5', 
+        <Box
+          sx={{
+            p: 2,
+            bgcolor: '#f5f5f5',
             borderRadius: 1,
             fontFamily: 'monospace',
             fontSize: '14px',
@@ -186,8 +177,8 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
         >
           {mnemonic}
           <Tooltip title={copiedMnemonic ? 'Đã copy!' : 'Copy seed phrase'}>
-            <IconButton 
-              size="small" 
+            <IconButton
+              size="small"
               onClick={handleCopyMnemonic}
               sx={{ position: 'absolute', top: 8, right: 8 }}
             >
@@ -198,7 +189,7 @@ const WalletQRDisplay = ({ open, onClose, qrCode, walletAddress, mnemonic, priva
 
         <Alert severity="info" sx={{ mt: 3 }}>
           <Typography variant="body2">
-            Sau khi import ví vào MetaMask, bạn có thể đăng nhập vào hệ thống 
+            Sau khi import ví vào MetaMask, bạn có thể đăng nhập vào hệ thống
             bằng cách kết nối ví và ký tin nhắn xác thực.
           </Typography>
         </Alert>

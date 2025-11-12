@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Box,
-  Typography,
-  Paper,
-  Alert,
-  Divider,
-  Chip,
+  Container, Box, Typography, Paper, Divider, Alert, Chip
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { getUserProfile } from '../services/api';

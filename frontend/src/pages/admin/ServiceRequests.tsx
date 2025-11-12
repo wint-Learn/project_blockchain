@@ -1,27 +1,10 @@
 import { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Tabs,
-  Tab,
-  Alert,
-  CircularProgress,
+  Container, Typography, Paper, Tabs, Tab, Table, TableBody,
+  TableCell, TableContainer, TableHead, TableRow, Button, Box,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField
 } from '@mui/material';
-import { Refresh, CheckCircle, Cancel, AccountBalanceWallet } from '@mui/icons-material';
+import { Refresh, CheckCircle, Cancel } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { ethers } from 'ethers';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -31,10 +14,10 @@ import StatusChip from '../../components/shared/StatusChip';
 import api from '../../services/api';
 import { useMetaMask } from '../../hooks/useMetaMask';
 
-// Contract addresses from .env
-const SERVICE_CONTRACT_ADDRESS = '0x09635F643e140090A9A8Dcd712eD6285858ceBef';
+// Địa chỉ hợp đồng từ .env
+const SERVICE_CONTRACT_ADDRESS = import.meta.env.SERVICE_CONTRACT_ADDRESS;
 
-// Simplified ABI - only registerService function needed for approval
+// ABI cho hợp đồng dịch vụ
 const SERVICE_CONTRACT_ABI = [
   {
     "inputs": [
@@ -137,10 +120,10 @@ const ServiceRequests = () => {
     setError('');
 
     try {
-      const endpoint = tabValue === 0 
+      const endpoint = tabValue === 0
         ? '/services/admin/pending'
         : '/services/admin/all';
-      
+
       const response = await fetch(`http://localhost:3000/api${endpoint}`, {
         headers: {
           'Content-Type': 'application/json',
@@ -148,7 +131,7 @@ const ServiceRequests = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setRequests(data.data);
       } else {
@@ -199,7 +182,7 @@ const ServiceRequests = () => {
       if (!cccdNumber) {
         throw new Error('Không tìm thấy số CCCD trong yêu cầu');
       }
-      
+
       const cccdHash = ethers.keccak256(ethers.toUtf8Bytes(cccdNumber));
       const serviceData = JSON.stringify({
         cccd_number: cccdNumber,
@@ -231,9 +214,9 @@ const ServiceRequests = () => {
       });
 
       if (response.data.success) {
-        enqueueSnackbar('✅ Đã duyệt yêu cầu thành công! Gas đã trừ từ ví MetaMask của bạn.', { 
+        enqueueSnackbar('✅ Đã duyệt yêu cầu thành công! Gas đã trừ từ ví MetaMask của bạn.', {
           variant: 'success',
-          autoHideDuration: 5000 
+          autoHideDuration: 5000
         });
         fetchRequests();
       } else {
@@ -241,7 +224,7 @@ const ServiceRequests = () => {
       }
     } catch (err: any) {
       console.error('Approve error:', err);
-      
+
       // Handle specific MetaMask errors
       if (err.code === 4001) {
         enqueueSnackbar('Bạn đã từ chối giao dịch trong MetaMask', { variant: 'warning' });
@@ -251,7 +234,7 @@ const ServiceRequests = () => {
         enqueueSnackbar('Không đủ ETH để trả gas. Vui lòng nạp thêm vào ví MetaMask.', { variant: 'error' });
       } else {
         enqueueSnackbar(
-          err.response?.data?.message || err.message || 'Không thể duyệt yêu cầu', 
+          err.response?.data?.message || err.message || 'Không thể duyệt yêu cầu',
           { variant: 'error' }
         );
       }
@@ -306,7 +289,7 @@ const ServiceRequests = () => {
     });
   };
 
-  const filteredRequests = tabValue === 0 
+  const filteredRequests = tabValue === 0
     ? requests.filter(r => r.status === 'pending')
     : requests;
 
@@ -338,176 +321,176 @@ const ServiceRequests = () => {
             ) : filteredRequests.length === 0 ? (
               <EmptyState message="Không có yêu cầu nào đang chờ duyệt" type="info" />
             ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Người nộp</TableCell>
-                    <TableCell>Dịch vụ</TableCell>
-                    <TableCell>Trạng thái</TableCell>
-                    <TableCell>Ngày nộp</TableCell>
-                    <TableCell>Thao tác</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredRequests.map((request) => (
-                    <TableRow key={request.id} hover>
-                      <TableCell>{request.id}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="bold">
-                          {request.full_name || 'N/A'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                          {request.wallet_address.substring(0, 10)}...
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {serviceTypeLabels[request.service_type] || request.service_type}
-                      </TableCell>
-                      <TableCell>
-                        <StatusChip status={request.status} />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDate(request.created_at)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {request.status === 'pending' && (
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button
-                              size="small"
-                              variant="contained"
-                              color="success"
-                              startIcon={<CheckCircle />}
-                              onClick={() => handleApprove(request)}
-                              disabled={processing}
-                            >
-                              Duyệt
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              startIcon={<Cancel />}
-                              onClick={() => handleRejectClick(request)}
-                              disabled={processing}
-                            >
-                              Từ chối
-                            </Button>
-                          </Box>
-                        )}
-                      </TableCell>
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>ID</TableCell>
+                      <TableCell>Người nộp</TableCell>
+                      <TableCell>Dịch vụ</TableCell>
+                      <TableCell>Trạng thái</TableCell>
+                      <TableCell>Ngày nộp</TableCell>
+                      <TableCell>Thao tác</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </TabPanel>
-
-        <TabPanel value={tabValue} index={1}>
-          {loading ? (
-            <LoadingSpinner message="Đang tải yêu cầu..." />
-          ) : error ? (
-            <EmptyState message={error} type="error" action={{ label: 'Thử lại', onClick: fetchRequests }} />
-          ) : requests.length === 0 ? (
-            <EmptyState message="Chưa có yêu cầu nào" type="info" />
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>ID</TableCell>
-                    <TableCell>Người nộp</TableCell>
-                    <TableCell>Dịch vụ</TableCell>
-                    <TableCell>Trạng thái</TableCell>
-                    <TableCell>Ngày nộp</TableCell>
-                    <TableCell>Blockchain TX</TableCell>
-                    <TableCell>Ghi chú</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {requests.map((request) => (
-                    <TableRow key={request.id} hover>
-                      <TableCell>{request.id}</TableCell>
-                      <TableCell>
-                        <Typography variant="body2" fontWeight="bold">
-                          {request.full_name || 'N/A'}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                          {request.wallet_address.substring(0, 10)}...
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {serviceTypeLabels[request.service_type] || request.service_type}
-                      </TableCell>
-                      <TableCell>
-                        <StatusChip status={request.status} />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDate(request.created_at)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {request.tx_hash ? (
-                          <Typography variant="body2" color="primary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                            {request.tx_hash.substring(0, 10)}...{request.tx_hash.substring(request.tx_hash.length - 8)}
+                  </TableHead>
+                  <TableBody>
+                    {filteredRequests.map((request) => (
+                      <TableRow key={request.id} hover>
+                        <TableCell>{request.id}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="bold">
+                            {request.full_name || 'N/A'}
                           </Typography>
-                        ) : (
+                          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                            {request.wallet_address.substring(0, 10)}...
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {serviceTypeLabels[request.service_type] || request.service_type}
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip status={request.status} />
+                        </TableCell>
+                        <TableCell>
                           <Typography variant="body2" color="text.secondary">
-                            -
+                            {formatDate(request.created_at)}
                           </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {request.status === 'rejected' && request.rejection_reason && (
-                          <Typography variant="body2" color="error.main">
-                            {request.rejection_reason}
-                          </Typography>
-                        )}
-                        {request.status === 'approved' && (
-                          <Typography variant="body2" color="success.main">
-                            Service ID: {request.service_id}
-                          </Typography>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </TabPanel>
-      </Paper>
+                        </TableCell>
+                        <TableCell>
+                          {request.status === 'pending' && (
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Button
+                                size="small"
+                                variant="contained"
+                                color="success"
+                                startIcon={<CheckCircle />}
+                                onClick={() => handleApprove(request)}
+                                disabled={processing}
+                              >
+                                Duyệt
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                startIcon={<Cancel />}
+                                onClick={() => handleRejectClick(request)}
+                                disabled={processing}
+                              >
+                                Từ chối
+                              </Button>
+                            </Box>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </TabPanel>
 
-      {/* Reject Dialog */}
-      <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Từ chối yêu cầu {selectedRequest?.id}</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Lý do từ chối"
-            fullWidth
-            multiline
-            rows={4}
-            value={rejectionReason}
-            onChange={(e) => setRejectionReason(e.target.value)}
-            placeholder="Nhập lý do từ chối yêu cầu này..."
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRejectDialogOpen(false)} disabled={processing}>
-            Hủy
-          </Button>
-          <Button onClick={handleRejectConfirm} variant="contained" color="error" disabled={processing}>
-            {processing ? 'Đang xử lý...' : 'Xác nhận từ chối'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          <TabPanel value={tabValue} index={1}>
+            {loading ? (
+              <LoadingSpinner message="Đang tải yêu cầu..." />
+            ) : error ? (
+              <EmptyState message={error} type="error" action={{ label: 'Thử lại', onClick: fetchRequests }} />
+            ) : requests.length === 0 ? (
+              <EmptyState message="Chưa có yêu cầu nào" type="info" />
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>ID</TableCell>
+                      <TableCell>Người nộp</TableCell>
+                      <TableCell>Dịch vụ</TableCell>
+                      <TableCell>Trạng thái</TableCell>
+                      <TableCell>Ngày nộp</TableCell>
+                      <TableCell>Blockchain TX</TableCell>
+                      <TableCell>Ghi chú</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {requests.map((request) => (
+                      <TableRow key={request.id} hover>
+                        <TableCell>{request.id}</TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="bold">
+                            {request.full_name || 'N/A'}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                            {request.wallet_address.substring(0, 10)}...
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {serviceTypeLabels[request.service_type] || request.service_type}
+                        </TableCell>
+                        <TableCell>
+                          <StatusChip status={request.status} />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatDate(request.created_at)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {request.tx_hash ? (
+                            <Typography variant="body2" color="primary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                              {request.tx_hash.substring(0, 10)}...{request.tx_hash.substring(request.tx_hash.length - 8)}
+                            </Typography>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">
+                              -
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {request.status === 'rejected' && request.rejection_reason && (
+                            <Typography variant="body2" color="error.main">
+                              {request.rejection_reason}
+                            </Typography>
+                          )}
+                          {request.status === 'approved' && (
+                            <Typography variant="body2" color="success.main">
+                              Service ID: {request.service_id}
+                            </Typography>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </TabPanel>
+        </Paper>
+
+        {/* Reject Dialog */}
+        <Dialog open={rejectDialogOpen} onClose={() => setRejectDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Từ chối yêu cầu {selectedRequest?.id}</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Lý do từ chối"
+              fullWidth
+              multiline
+              rows={4}
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              placeholder="Nhập lý do từ chối yêu cầu này..."
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setRejectDialogOpen(false)} disabled={processing}>
+              Hủy
+            </Button>
+            <Button onClick={handleRejectConfirm} variant="contained" color="error" disabled={processing}>
+              {processing ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </AdminLayout>
   );

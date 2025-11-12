@@ -19,7 +19,7 @@ const statusConfig = {
 
 const StatusChip = ({ status, label }: StatusChipProps) => {
   const config = statusConfig[status];
-  
+
   return (
     <Chip
       label={label || config.label}

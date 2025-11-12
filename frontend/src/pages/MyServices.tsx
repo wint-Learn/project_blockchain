@@ -1,17 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  Box,
+  Container, Box, Typography, Button, Paper,
+  Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';

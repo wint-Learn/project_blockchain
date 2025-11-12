@@ -1,16 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
-    Container,
-    Box,
-    TextField,
-    Button,
-    Typography,
-    Paper,
-    Alert,
-    CircularProgress,
-    FormControlLabel,
-    Checkbox,
+    Container, Paper, Typography, Box, TextField, Button,
+    CircularProgress, Alert, FormControlLabel, Checkbox
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { registerWithMetaMask } from '../services/api';

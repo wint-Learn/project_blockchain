@@ -1,13 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
-  Box,
+  Container, Box, Card, CardContent, 
+  CardActions, Typography, Button,
 } from '@mui/material';
 import {
   DirectionsCar,

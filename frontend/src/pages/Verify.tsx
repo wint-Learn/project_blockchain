@@ -1,17 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Container,
-    Paper,
-    TextField,
-    Button,
-    Typography,
-    Box,
-    Stepper,
-    Step,
-    StepLabel,
-    Alert,
-    CircularProgress,
+    Container, Box, Typography, Paper, Stepper, Step, StepLabel,
+    TextField, Button, Alert, CircularProgress
 } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import { requestOTP, verifyOTP } from '../services/api';

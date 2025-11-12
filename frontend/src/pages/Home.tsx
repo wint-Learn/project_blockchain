@@ -1,10 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Container, Box, Typography, Button, Paper } from '@mui/material';
 import { 
-  AccountBalanceWallet, 
-  Login, 
-  Dashboard,
-  VerifiedUser 
+  AccountBalanceWallet, Dashboard, VerifiedUser, Login
 } from '@mui/icons-material';
 import { useAuthStore } from '../store/useAuthStore';
 

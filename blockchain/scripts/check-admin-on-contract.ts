@@ -15,9 +15,7 @@ async function main() {
   
   // Check common admin addresses
   const adminAddresses = [
-    '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266', // Hardhat Account #0
-    '0x70997970C51812dc3A010C7d01b50e0d17dc79C8', // Hardhat Account #1
-    '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC', // Hardhat Account #2
+    '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
   ];
   
   console.log('\n🔍 Checking admin status:\n');

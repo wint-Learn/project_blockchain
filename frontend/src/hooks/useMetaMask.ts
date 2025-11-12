@@ -77,7 +77,7 @@ export const useMetaMask = () => {
                     }));
                 } else {
                     // User disconnected MetaMask
-                    console.warn('⚠️ MetaMask disconnected');
+                    console.warn('MetaMask disconnected');
                     if (user) {
                         logout(); // Logout if user was logged in
                     }
@@ -105,10 +105,10 @@ export const useMetaMask = () => {
                 ethereum.removeListener('chainChanged', () => { });
             }
         };
-    }, [user, logout]); // 🆕 Add dependencies
+    }, [user, logout]); // Thêm dependencies
 
     /**
-     * Connect to MetaMask
+     * Kết nối MetaMask
      */
     const connect = async (): Promise<string | null> => {
         const { ethereum } = window as any;
@@ -136,7 +136,7 @@ export const useMetaMask = () => {
 
             return account;
         } catch (err: any) {
-            // Handle user rejection gracefully
+            // Handle từ chối của người dùng
             if (err.code === 4001) {
                 setState(prev => ({
                     ...prev,
@@ -145,7 +145,7 @@ export const useMetaMask = () => {
                 return null;
             }
 
-            // Other errors
+            // Lỗi khác
             console.error('Error connecting MetaMask:', err);
             setState(prev => ({
                 ...prev,
@@ -157,7 +157,7 @@ export const useMetaMask = () => {
     };
 
     /**
-     * Sign a message with MetaMask
+     * Ký một thông điệp với MetaMask
      */
     const signMessage = async (message: string): Promise<string | null> => {
         const { ethereum } = window as any;
@@ -177,7 +177,7 @@ export const useMetaMask = () => {
 
             return signature;
         } catch (err: any) {
-            // Handle user rejection gracefully
+            // Handle từ chối của người dùng
             if (err.code === 4001 || err.code === 'ACTION_REJECTED') {
                 setState(prev => ({
                     ...prev,
@@ -186,7 +186,7 @@ export const useMetaMask = () => {
                 return null;
             }
 
-            // Other errors
+            // Lỗi khác
             console.error('Error signing message:', err);
             setState(prev => ({
                 ...prev,
@@ -198,7 +198,7 @@ export const useMetaMask = () => {
     };
 
     /**
-     * Disconnect MetaMask (just clear state, can't force disconnect in MetaMask)
+     * Ngắt kết nối MetaMask (chỉ xóa state, không thể ép ngắt kết nối trong MetaMask)
      */
     const disconnect = () => {
         setState(prev => ({
@@ -210,7 +210,7 @@ export const useMetaMask = () => {
     };
 
     /**
-     * Clear error
+     * Xóa lỗi hiện tại
      */
     const clearError = () => {
         setState(prev => ({ ...prev, error: null }));

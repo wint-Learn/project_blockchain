@@ -1,26 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Container,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
+  Box, Typography, Card, CardContent, Container, 
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 } from '@mui/material';
 import {
-  People,
-  Fingerprint,
-  HourglassEmpty,
-  CheckCircle,
-  Cancel,
-  Assignment,
-  TrendingUp,
+  People, Fingerprint, HourglassEmpty, CheckCircle,
+  Cancel, Assignment, TrendingUp,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import AdminLayout from '../../components/layout/AdminLayout';

@@ -1,27 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Box,
-  Typography,
-  Paper,
-  Alert,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  Card,
-  CardContent,
-  Stack,
+  Container, Box, Card, CardContent, Stack, Typography, Paper, Chip, TableContainer,
+  Table, TableHead, TableRow, TableCell, TableBody, Alert
 } from '@mui/material';
 import {
-  AccountBalanceWallet,
-  Fingerprint,
-  CalendarToday,
-  TrendingUp,
+  AccountBalanceWallet, Fingerprint, CalendarToday, TrendingUp
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { getDIDInfo, getLogs } from '../services/api';

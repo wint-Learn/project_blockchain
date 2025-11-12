@@ -1,32 +1,12 @@
 import { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Box,
-  Card,
-  CardContent,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  TextField,
-  InputAdornment,
-  Alert,
-  IconButton,
-  Tooltip,
-  Stack,
+  Alert, Container, Card, CardContent, Typography,
+  Box, Table, TableBody, TableCell, TableContainer,
+  TableHead, TableRow, Chip, Tooltip, IconButton,
+  InputAdornment, TextField, Stack,
 } from '@mui/material';
 import {
-  Search,
-  Warning,
-  CheckCircle,
-  Error as ErrorIcon,
-  LocationOn,
-  Devices,
-  Refresh,
+  Refresh, Search, CheckCircle, Warning, Error as ErrorIcon, LocationOn, Devices,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import AdminLayout from '../../components/layout/AdminLayout';

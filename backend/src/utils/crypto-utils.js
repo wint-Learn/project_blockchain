@@ -17,10 +17,10 @@ function encrypt(text) {
     Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
     iv
   );
-  
+
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
-  
+
   return `${iv.toString('hex')}:${encrypted}`;
 }
 
@@ -37,10 +37,10 @@ function decrypt(text) {
     Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
     iv
   );
-  
+
   let decrypted = decipher.update(encryptedHex, 'hex', 'utf8');
   decrypted += decipher.final('utf8');
-  
+
   return decrypted;
 }
 
