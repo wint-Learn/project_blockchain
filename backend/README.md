@@ -131,11 +131,3 @@ npm run rotate-key OLD_KEY NEW_KEY
 SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 50;
 ```
 
-## 📞 Support
-
-Xem chi tiết tài liệu trong `docs/` hoặc liên hệ team.
-
----
-
-**Version:** 1.0.0  
-**Last updated:** 2025-10-23

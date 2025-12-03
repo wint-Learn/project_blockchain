@@ -18,11 +18,12 @@ const port = process.env.PORT || 3000;
 // Helmet
 app.use(helmet());
 
-// CORS
+console.log('CORS_ORIGINS =', process.env.CORS_ORIGINS);
+
+// CORS_ORIGINS setup
 const corsOptions = {
-  origin: process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173', 'http://localhost:5174'],
+  // Lấy từ CORS_ORIGINS trong .env
+  origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : '*',
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -255,7 +256,7 @@ logger.info('About to start server on port', { port });
 
 app.listen(port, '0.0.0.0', () => {
   logger.info(`Backend running on port ${port}`);
-  logger.info('📍 Routes:');
+  logger.info('Routes:');
   logger.info('   GET  /health');
   logger.info('   GET  /api/did/:address');
   logger.info('   POST /api/auth/register');

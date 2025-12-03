@@ -1,7 +1,7 @@
 const winston = require('winston');
 const path = require('path');
 
-// Define log format
+// Định nghĩa định dạng log:
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.errors({ stack: true }),
@@ -9,7 +9,7 @@ const logFormat = winston.format.combine(
   winston.format.json()
 );
 
-// Define console format (human-readable for development)
+    // Định nghĩa định dạng log cho console
 const consoleFormat = winston.format.combine(
   winston.format.colorize(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -22,41 +22,41 @@ const consoleFormat = winston.format.combine(
   })
 );
 
-// Create logger instance
+// Tạo logger với các transports
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
   format: logFormat,
   defaultMeta: { service: 'did-backend' },
   transports: [
-    // Write all logs to console
+    // Viết tất cả log ra console
     new winston.transports.Console({
       format: consoleFormat
     }),
-    
-    // Write all logs with level 'error' to error.log
+
+    // Viết tất cả log với level 'error' ra error.log
     new winston.transports.File({ 
       filename: path.join(__dirname, '../../logs/error.log'), 
       level: 'error',
       maxsize: 5242880, // 5MB
       maxFiles: 5
     }),
-    
-    // Write all logs to combined.log
-    new winston.transports.File({ 
+
+    // Viết tất cả log ra combined.log
+    new winston.transports.File({
       filename: path.join(__dirname, '../../logs/combined.log'),
       maxsize: 5242880, // 5MB
       maxFiles: 5
     })
   ],
   
-  // Handle exceptions
+  // Xử lý ngoại lệ
   exceptionHandlers: [
     new winston.transports.File({ 
       filename: path.join(__dirname, '../../logs/exceptions.log') 
     })
   ],
-  
-  // Handle rejections
+
+  // Xử lý từ chối
   rejectionHandlers: [
     new winston.transports.File({ 
       filename: path.join(__dirname, '../../logs/rejections.log') 
@@ -64,7 +64,7 @@ const logger = winston.createLogger({
   ]
 });
 
-// Create a stream object for Morgan integration (if needed)
+// Tạo một đối tượng stream cho tích hợp Morgan
 logger.stream = {
   write: (message) => {
     logger.info(message.trim());

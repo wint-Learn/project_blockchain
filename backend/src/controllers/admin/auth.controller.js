@@ -17,7 +17,7 @@ async function adminLogin(req, res) {
     if (!username || !password) {
       return res.status(400).json({
         error: 'Thiếu thông tin',
-        message: 'Vui lòng nhập username và password'
+        message: 'Vui lòng nhập tên đăng nhập và mật khẩu'
       });
     }
     
@@ -43,7 +43,7 @@ async function adminLogin(req, res) {
     const isValidPassword = await bcrypt.compare(password, admin.password_hash);
     
     if (!isValidPassword) {
-      logger.warn('Admin login failed - invalid password', { username });
+      logger.warn('Quản trị viên đăng nhập thất bại - mật khẩu không hợp lệ', { username });
       return res.status(401).json({
         error: 'Đăng nhập thất bại',
         message: 'Tên đăng nhập hoặc mật khẩu không đúng'
@@ -52,9 +52,9 @@ async function adminLogin(req, res) {
     
     // Generate token (simple demo token - use JWT in production)
     const token = Buffer.from(`${admin.id}:${admin.username}:${Date.now()}`).toString('base64');
-    
-    logger.info('Admin login successful', { adminId: admin.id, username: admin.username });
-    
+
+    logger.info('Quản trị viên đăng nhập thành công', { adminId: admin.id, username: admin.username });
+
     return res.status(200).json({
       success: true,
       message: 'Đăng nhập thành công',

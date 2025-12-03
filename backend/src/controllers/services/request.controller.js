@@ -119,7 +119,7 @@ async function requestService(req, res) {
     });
     
   } catch (error) {
-    logger.error('❌ Request service error:', error);
+    logger.error('Request service error:', error);
     return res.status(500).json({
       success: false,
       message: 'Lỗi hệ thống khi xử lý yêu cầu',
@@ -174,7 +174,7 @@ async function getMyRequests(req, res) {
     });
     
   } catch (error) {
-    logger.error('❌ Get my requests error:', error);
+    logger.error('Get my requests error:', error);
     return res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy danh sách yêu cầu',
@@ -219,7 +219,7 @@ async function getRequestDetail(req, res) {
     });
     
   } catch (error) {
-    logger.error('❌ Get request detail error:', error);
+    logger.error('Lỗi khi lấy chi tiết yêu cầu:', error);
     return res.status(500).json({
       success: false,
       message: 'Lỗi khi lấy chi tiết yêu cầu',
