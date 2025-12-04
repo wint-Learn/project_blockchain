@@ -32,15 +32,16 @@ function App() {
           horizontal: 'right',
         }}
       >
+        
         <Router>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/verify" element={<Verify />} />
-            
+
             {/* MetaMask Authentication (Primary) */}
             <Route path="/register" element={<RegisterMetaMask />} />
             <Route path="/login" element={<LoginMetaMask />} />
-            
+
             <Route
               path="/dashboard"
               element={
@@ -49,8 +50,8 @@ function App() {
                 </PrivateRoute>
               }
             />
-            
-            {/* 🆕 Profile Page */}
+
+            {/* Profile Page */}
             <Route
               path="/profile"
               element={
@@ -59,7 +60,7 @@ function App() {
                 </PrivateRoute>
               }
             />
-            
+
             {/* Service Routes */}
             <Route path="/services" element={<Services />} />
             <Route path="/services/:serviceId/request" element={<ServiceRequest />} />
@@ -79,7 +80,7 @@ function App() {
                 </PrivateRoute>
               }
             />
-            
+
             {/* Admin Routes */}
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />

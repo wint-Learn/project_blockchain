@@ -12,7 +12,7 @@ async function main() {
   console.log("💰 Số dư tài khoản:", ethers.formatEther(balance), "MATIC");
 
   if (balance === 0n) {
-    console.error("❌ LỖI: Tài khoản không có MATIC để trả gas fee!");
+    console.error("Lỗi: Tài khoản không có MATIC để trả gas fee!");
     console.log("💡 Hướng dẫn lấy MATIC test:");
     console.log("   1. Truy cập: https://faucet.polygon.technology/");
     console.log("   2. Chọn mạng: Polygon Amoy");

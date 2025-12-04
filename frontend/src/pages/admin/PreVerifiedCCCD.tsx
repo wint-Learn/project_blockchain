@@ -1,22 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
-  Container,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  Box,
-  TextField,
-  InputAdornment,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Container, Typography, Paper, InputAdornment,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box,
+  Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import { Search, Refresh, Visibility, Block } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
@@ -335,7 +321,12 @@ const PreVerifiedCCCD = () => {
         <ConfirmDialog
           open={blacklistDialogOpen}
           title="Xác nhận chặn CCCD"
-          message={`Bạn có chắc chắn muốn chặn CCCD ${selectedRecord?.cccd_number} (${selectedRecord?.full_name})? Người dùng này sẽ không thể đăng ký DID.`}
+          message={
+            `Bạn có chắc chắn muốn chặn CCCD 
+            ${selectedRecord?.cccd_number} 
+            (${selectedRecord?.full_name})? 
+            Người dùng này sẽ không thể đăng ký DID.`
+          }
           confirmText="Xác nhận chặn"
           cancelText="Hủy"
           severity="error"

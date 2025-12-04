@@ -295,14 +295,7 @@ const ActivityLogs = () => {
             </TableBody>
           </Table>
         </TableContainer>
-
-        {/* Notes */}
-        <Alert severity="warning" sx={{ mt: 3 }}>
-          <Typography variant="caption">
-            <strong>Lưu ý:</strong> Backend API cần được implement tại GET /api/admin/login-logs.
-            Hiện tại đang hiển thị dữ liệu mock để demo UI và tính năng anomaly detection.
-          </Typography>
-        </Alert>
+              
       </Container>
     </AdminLayout>
   );

@@ -164,7 +164,7 @@ export default function Dashboard() {
                 {didInfo.publicKey.slice(0, 20)}...{didInfo.publicKey.slice(-20)}
               </Typography>
               <Typography variant="body1" sx={{ mt: 1 }}>
-                <strong>Ngày tạo:</strong>{' '}
+                <strong>Thời điểm đăng ký:</strong>{' '}
                 {new Date(didInfo.registeredAt).toLocaleString('vi-VN')}
               </Typography>
 

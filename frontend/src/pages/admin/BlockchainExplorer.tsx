@@ -331,14 +331,6 @@ const BlockchainExplorer = () => {
           </TableContainer>
         )}
 
-        {/* Note */}
-        <Alert severity="warning" sx={{ mt: 3 }}>
-          <Typography variant="caption">
-            <strong>Lưu ý:</strong> Đây là dữ liệu từ Ganache local blockchain. 
-            Trong production, sẽ kết nối với Ethereum mainnet/testnet.
-            API blockchain cần được implement để lấy dữ liệu thực từ Web3.
-          </Typography>
-        </Alert>
       </Container>
     </AdminLayout>
   );

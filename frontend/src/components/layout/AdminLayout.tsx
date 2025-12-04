@@ -1,24 +1,10 @@
 import type { ReactNode } from 'react';
 import {
-  Box,
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  ListItemButton,
-  Divider,
-  useTheme,
-  useMediaQuery,
-  Avatar,
-  Stack,
+  Box, Drawer, Toolbar, Avatar, Typography, Divider, Stack,
+  useTheme, useMediaQuery,
+  List, ListItem, ListItemButton, ListItemIcon, ListItemText,
 } from '@mui/material';
 import {
-  Menu as MenuIcon,
   Dashboard as DashboardIcon,
   People as PeopleIcon,
   Badge as BadgeIcon,
@@ -93,9 +79,10 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </Typography>
         </Stack>
       </Box>
-      
-        {/* Navigation */}
+
+      {/* Navigation */}
       <List sx={{ flexGrow: 1, px: 1, py: 2 }}>
+        
         {navItems.map((item) => (
           <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
             <ListItemButton
@@ -131,9 +118,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           </ListItem>
         ))}
       </List>
-      
+
       <Divider />
-      
+
       {/* Logout */}
       <List sx={{ px: 1, py: 2 }}>
         <ListItem disablePadding>
@@ -158,7 +145,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      
+
 
       {/* Drawer */}
       <Box

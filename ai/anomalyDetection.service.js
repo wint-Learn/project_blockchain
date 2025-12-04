@@ -160,7 +160,7 @@ async function calculateLoginRisk(pool, userId, ipAddress, userAgent, loginAt) {
     };
 
   } catch (error) {
-    console.error('❌ Anomaly detection error:', error.message);
+    console.error('Anomaly detection error:', error.message);
     // Fail gracefully - don't break login flow
     return {
       riskScore: 0.0,

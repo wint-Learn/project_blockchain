@@ -1,25 +1,9 @@
 import { useState, useEffect } from 'react';
 import {
-  Container,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
-  Box,
-  TextField,
-  InputAdornment,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Typography,
-  Divider,
-  Stack,
+  Container, Box, Typography, Paper, Table, TableBody,
+  TableCell, TableContainer, TableHead, TableRow, Dialog,
+  DialogTitle, DialogContent, DialogActions, Button,
+  Stack, Divider, TextField, IconButton, InputAdornment,
 } from '@mui/material';
 import { Search, Refresh, Visibility } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
@@ -252,7 +236,7 @@ const RegisteredUsers = () => {
                         <Typography variant="body2">{selectedUser.phone_number || 'N/A'}</Typography>
                       </Box>
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="caption" color="text.secondary">Ngày đăng ký</Typography>
+                        <Typography variant="caption" color="text.secondary">Ngày đăng ký DID</Typography>
                         <Typography variant="body2">{formatDate(selectedUser.created_at)}</Typography>
                       </Box>
                     </Box>

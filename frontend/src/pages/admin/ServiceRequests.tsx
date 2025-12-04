@@ -214,7 +214,7 @@ const ServiceRequests = () => {
       });
 
       if (response.data.success) {
-        enqueueSnackbar('✅ Đã duyệt yêu cầu thành công! Gas đã trừ từ ví MetaMask của bạn.', {
+        enqueueSnackbar('Đã duyệt yêu cầu thành công! Gas đã trừ từ ví MetaMask của bạn.', {
           variant: 'success',
           autoHideDuration: 5000
         });

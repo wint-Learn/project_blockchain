@@ -369,7 +369,7 @@ export default function RegisterMetaMask() {
                         </Box>
                     </Box>
 
-                    {/* 🆕 Option: Use existing MetaMask wallet */}
+                    {/* Option: Use existing MetaMask wallet */}
                     <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                         <FormControlLabel
                             control={
@@ -399,7 +399,7 @@ export default function RegisterMetaMask() {
                             }
                         />
 
-                        {/* 🆕 Show button to connect MetaMask */}
+                        {/* Show button to connect MetaMask */}
                         {useExistingWallet && !selectedAccount && (
                             <Box sx={{ mt: 2 }}>
                                 <Button

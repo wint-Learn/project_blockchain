@@ -1,25 +1,12 @@
 import type { ReactNode } from 'react';
 import {
-  Box,
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Button,
-  Avatar,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  Divider,
+  Box, AppBar, Toolbar, Typography, IconButton,
+  Avatar, Button, Menu, MenuItem, Divider, ListItemIcon,
 } from '@mui/material';
 import {
-  ArrowBack,
-  Person,
-  Business,
-  Assignment,
+  ArrowBack, Person, Business, Assignment,
   History as HistoryIcon,
-  Logout,
-  KeyboardArrowDown,
+  Logout, KeyboardArrowDown,
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
