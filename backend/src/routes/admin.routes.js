@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controllers/admin');
 const usersController = require('../controllers/admin/users.controller');
 const statsController = require('../controllers/admin/stats.controller');
+const anomalyController = require('../controllers/admin/anomaly.controller');
 const { auditMiddleware } = require('../middleware/audit-middleware');
 
 /**
@@ -110,6 +111,36 @@ router.get('/services/recent',
 router.get('/logs/export',
   auditMiddleware('export_logs', () => 'csv'),
   adminController.exportLogs
+);
+
+/**
+ * @route   GET /api/admin/anomalies
+ * @desc    Get list of anomalous logins (AI detection)
+ * @access  Admin
+ */
+router.get('/anomalies',
+  auditMiddleware('view_anomalies', () => 'all'),
+  anomalyController.getAnomalies
+);
+
+/**
+ * @route   GET /api/admin/anomaly-summary
+ * @desc    Get summary of anomalous login patterns
+ * @access  Admin
+ */
+router.get('/anomaly-summary',
+  auditMiddleware('view_anomaly_summary', () => 'dashboard'),
+  anomalyController.getAnomalySummary
+);
+
+/**
+ * @route   GET /api/admin/user-login-stats/:userId
+ * @desc    Get login statistics for a specific user
+ * @access  Admin
+ */
+router.get('/user-login-stats/:userId',
+  auditMiddleware('view_user_stats', (req) => req.params.userId),
+  anomalyController.getUserStats
 );
 
 module.exports = router;

@@ -54,7 +54,7 @@ const navItems: NavItem[] = [
 
 const drawerWidth = 260;
 
-const AdminLayout = ({ children, title }: AdminLayoutProps) => {
+const AdminLayout = ({ children }: AdminLayoutProps) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -89,17 +89,12 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
         </Avatar>
         <Stack>
           <Typography variant="h6" fontWeight="bold">
-            Admin Panel
-          </Typography>
-          <Typography variant="caption" sx={{ opacity: 0.9 }}>
             Hệ thống quản lý
           </Typography>
         </Stack>
       </Box>
       
-      <Divider />
-      
-      {/* Navigation */}
+        {/* Navigation */}
       <List sx={{ flexGrow: 1, px: 1, py: 2 }}>
         {navItems.map((item) => (
           <ListItem key={item.path} disablePadding sx={{ mb: 0.5 }}>
@@ -163,28 +158,7 @@ const AdminLayout = ({ children, title }: AdminLayoutProps) => {
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* AppBar */}
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          ml: { md: `${drawerWidth}px` },
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            {title || 'Admin Dashboard'}
-          </Typography>
-        </Toolbar>
-      </AppBar>
+      
 
       {/* Drawer */}
       <Box
