@@ -8,7 +8,7 @@ import {
   AccountBalanceWallet, Fingerprint, CalendarToday, TrendingUp
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
-import { getDIDInfo, getLogs } from '../services/api';
+import { getDIDInfo, getLogs, getUserProfile } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import UserLayout from '../components/layout/UserLayout';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
@@ -37,7 +37,7 @@ export default function Dashboard() {
   
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
 
   useEffect(() => {
     console.log('[Dashboard] useEffect triggered, user:', user);
@@ -64,6 +64,28 @@ export default function Dashboard() {
       const logsResponse = await getLogs({ limit: 10 });
       console.log('[Dashboard] Logs Response:', logsResponse);
       setLogs(logsResponse.data.logs || []);
+
+      // 🆕 Nếu user chưa có cccdInfo, fetch từ getUserProfile
+      if (!user?.cccdInfo) {
+        console.log('[Dashboard] User missing cccdInfo, fetching from profile API...');
+        try {
+          const profileResponse = await getUserProfile(user!.address);
+          console.log('[Dashboard] Profile Response:', profileResponse);
+          
+          if (profileResponse.data?.data?.cccdInfo) {
+            // Cập nhật user store với cccdInfo
+            setUser({
+              ...user,
+              address: user?.address ?? '', // Ensure address is always a string
+              cccdInfo: profileResponse.data.data.cccdInfo
+            });
+            console.log('[Dashboard] Updated user with cccdInfo:', profileResponse.data.data.cccdInfo);
+          }
+        } catch (profileError) {
+          console.warn('[Dashboard] Failed to fetch cccdInfo:', profileError);
+          // Non-blocking error
+        }
+      }
     } catch (error: any) {
       console.error('Fetch data error:', error);
       console.error('Error response:', error.response);
@@ -95,9 +117,9 @@ export default function Dashboard() {
               <Stack direction="row" spacing={2} alignItems="center">
                 <AccountBalanceWallet color="primary" sx={{ fontSize: 40 }} />
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Địa chỉ ví</Typography>
-                  <Typography variant="h6" sx={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                    {user?.address.substring(0, 10)}...{user?.address.substring(36)}
+                  <Typography variant="body2" color="text.secondary">Họ và tên</Typography>
+                  <Typography variant="h6">
+                    {user?.cccdInfo?.fullName || 'Chưa cập nhật'}
                   </Typography>
                 </Box>
               </Stack>
@@ -212,10 +234,24 @@ export default function Dashboard() {
                 </Box>
               )}
 
-              {user?.anomalyScore !== undefined && user.anomalyScore > 0.5 && (
+              {user?.loginRisk?.isAnomaly && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
-                  Phát hiện hoạt động bất thường (Anomaly Score:{' '}
-                  {user.anomalyScore.toFixed(2)})
+                  <Typography variant="body2" fontWeight="bold" gutterBottom>
+                    ⚠️ Phát hiện đăng nhập bất thường!
+                  </Typography>
+                  <Typography variant="body2">
+                    Điểm rủi ro: <strong>{((user.loginRisk.riskScore || 0) * 100).toFixed(1)}%</strong>
+                  </Typography>
+                  {user.loginRisk.location?.full && (
+                    <Typography variant="body2">
+                      Vị trí: {user.loginRisk.location.full}
+                    </Typography>
+                  )}
+                  {user.loginRisk.details?.reason && (
+                    <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                      Lý do: {user.loginRisk.details.reason}
+                    </Typography>
+                  )}
                 </Alert>
               )}
             </Box>
@@ -249,13 +285,13 @@ export default function Dashboard() {
                   logs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell>
-                        {new Date(log.timestamp).toLocaleString('vi-VN')}
+                        {log.timestamp ? new Date(log.timestamp).toLocaleString('vi-VN') : 'N/A'}
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={log.action === 'register' ? 'Đăng ký' : log.action === 'login' ? 'Đăng nhập' : log.action}
+                          label={log.action ? (log.action === 'register' ? 'Đăng ký' : log.action === 'login' ? 'Đăng nhập' : log.action) : 'N/A'}
                           color={
-                            log.action === 'register' ? 'primary' : 'secondary'
+                            log.action === 'register' ? 'primary' : log.action === 'login' ? 'secondary' : 'default'
                           }
                           size="small"
                         />

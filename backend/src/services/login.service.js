@@ -116,10 +116,11 @@ async function loginDID({ address, qrData, message, signature, ip, userAgent, po
 async function loginWithSignature({ address, ip, userAgent, pool, contract, logger }) {
   logger.info('🔐 MetaMask login attempt', { address, ip });
   
-  // 1) Check if user exists in database
+  // 1) Check if user exists in database and get citizen info
   const userResult = await pool.query(
-    `SELECT u.*
+    `SELECT u.*, pv.full_name, pv.date_of_birth, pv.gender, pv.address as citizen_address
      FROM users u
+     LEFT JOIN pre_verified_cccd pv ON u.cccd_number_hash = pv.cccd_number_hash
      WHERE u.wallet_address = $1`,
     [address.toLowerCase()]
   );
@@ -133,6 +134,19 @@ async function loginWithSignature({ address, ip, userAgent, pool, contract, logg
   }
 
   const user = userResult.rows[0];
+  
+  // Check if user is locked
+  if (user.is_locked) {
+    logger.warn('❌ Login failed - account locked', { 
+      address, 
+      userId: user.id,
+      lockedReason: user.locked_reason 
+    });
+    const error = new Error(`Tài khoản đã bị khóa. Lý do: ${user.locked_reason || 'Không rõ'}`);
+    error.code = 'ACCOUNT_LOCKED';
+    error.statusCode = 403;
+    throw error;
+  }
   
   // 2) Get IP geolocation (free API)
   const location = await getIPLocation(ip);
@@ -212,6 +226,12 @@ async function loginWithSignature({ address, ip, userAgent, pool, contract, logg
       cccdHash: user.cccd_hash,
       cccdNumberHash: user.cccd_number_hash,
       createdAt: user.created_at,
+      cccdInfo: user.full_name ? {
+        fullName: user.full_name,
+        dateOfBirth: user.date_of_birth,
+        gender: user.gender,
+        address: user.citizen_address
+      } : null
     },
     loginRisk: {
       riskScore: Math.round(riskScore * 1000) / 1000,

@@ -4,13 +4,12 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Box,
   Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
-import { Search, Refresh, Visibility, Block } from '@mui/icons-material';
+import { Search, Refresh, Visibility } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import AdminLayout from '../../components/layout/AdminLayout';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
 import EmptyState from '../../components/shared/EmptyState';
 import StatusChip from '../../components/shared/StatusChip';
-import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import api from '../../services/api';
 
 interface CCCDRecord {
@@ -38,8 +37,6 @@ const PreVerifiedCCCD = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecord, setSelectedRecord] = useState<CCCDRecord | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-  const [blacklistDialogOpen, setBlacklistDialogOpen] = useState(false);
-  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     fetchRecords();
@@ -66,29 +63,6 @@ const PreVerifiedCCCD = () => {
   const handleViewDetail = (record: CCCDRecord) => {
     setSelectedRecord(record);
     setDetailDialogOpen(true);
-  };
-
-  const handleBlacklist = (record: CCCDRecord) => {
-    setSelectedRecord(record);
-    setBlacklistDialogOpen(true);
-  };
-
-  const handleBlacklistConfirm = async () => {
-    if (!selectedRecord) return;
-
-    setProcessing(true);
-    try {
-      await api.put(`/admin/cccd/${selectedRecord.id}/blacklist`, {
-        reason: 'Admin blacklist from UI'
-      });
-      enqueueSnackbar('Đã chặn CCCD thành công', { variant: 'success' });
-      setBlacklistDialogOpen(false);
-      fetchRecords();
-    } catch (err: any) {
-      enqueueSnackbar(err.response?.data?.message || 'Lỗi khi chặn CCCD', { variant: 'error' });
-    } finally {
-      setProcessing(false);
-    }
   };
 
   const filteredRecords = records.filter(
@@ -136,7 +110,7 @@ const PreVerifiedCCCD = () => {
     <AdminLayout>
       <Container maxWidth="xl" sx={{ py: 3 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5">CCCD Pre-verified</Typography>
+          <Typography variant="h5">Xác minh người dùng</Typography>
           <Button startIcon={<Refresh />} onClick={fetchRecords}>
             Làm mới
           </Button>
@@ -199,27 +173,14 @@ const PreVerifiedCCCD = () => {
                       <StatusChip status={record.status} />
                     </TableCell>
                     <TableCell align="right">
-                      <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          startIcon={<Visibility />}
-                          onClick={() => handleViewDetail(record)}
-                        >
-                          Chi tiết
-                        </Button>
-                        {record.status !== 'blacklisted' && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            startIcon={<Block />}
-                            onClick={() => handleBlacklist(record)}
-                          >
-                            Chặn
-                          </Button>
-                        )}
-                      </Box>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<Visibility />}
+                        onClick={() => handleViewDetail(record)}
+                      >
+                        Chi tiết
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -316,24 +277,6 @@ const PreVerifiedCCCD = () => {
             <Button onClick={() => setDetailDialogOpen(false)}>Đóng</Button>
           </DialogActions>
         </Dialog>
-
-        {/* Blacklist Confirm Dialog */}
-        <ConfirmDialog
-          open={blacklistDialogOpen}
-          title="Xác nhận chặn CCCD"
-          message={
-            `Bạn có chắc chắn muốn chặn CCCD 
-            ${selectedRecord?.cccd_number} 
-            (${selectedRecord?.full_name})? 
-            Người dùng này sẽ không thể đăng ký DID.`
-          }
-          confirmText="Xác nhận chặn"
-          cancelText="Hủy"
-          severity="error"
-          loading={processing}
-          onConfirm={handleBlacklistConfirm}
-          onCancel={() => setBlacklistDialogOpen(false)}
-        />
       </Container>
     </AdminLayout>
   );

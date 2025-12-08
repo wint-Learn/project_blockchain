@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Container, 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip
 } from '@mui/material';
 import {
   People, Fingerprint, HourglassEmpty, CheckCircle,
-  Cancel, Assignment, TrendingUp,
+  Cancel, Assignment, TrendingUp, Warning, Shield,
 } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -22,6 +22,9 @@ interface DashboardStats {
   pendingRequests: number;
   approvedRequests: number;
   rejectedRequests: number;
+  totalLogins?: number;
+  anomalousLogins?: number;
+  normalLogins?: number;
 }
 
 interface RecentRequest {
@@ -30,6 +33,19 @@ interface RecentRequest {
   status: 'pending' | 'approved' | 'rejected';
   full_name: string;
   created_at: string;
+}
+
+interface AnomalousLogin {
+  id: number;
+  userId: number;
+  username: string;
+  walletAddress: string;
+  loginTime: string;
+  ipAddress: string;
+  location: string;
+  countryCode: string;
+  riskScore: number;
+  anomalyReason: string;
 }
 
 const serviceTypeLabels: { [key: string]: string } = {
@@ -43,6 +59,7 @@ const AdminDashboard = () => {
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentRequests, setRecentRequests] = useState<RecentRequest[]>([]);
+  const [anomalousLogins, setAnomalousLogins] = useState<AnomalousLogin[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -63,25 +80,66 @@ const AdminDashboard = () => {
     setError('');
 
     try {
-      const [statsRes, requestsRes] = await Promise.all([
+      const [statsRes, requestsRes, anomalyRes, allLoginsRes] = await Promise.all([
         getDashboardStats(),
         api.get('/admin/services/recent?limit=10'),
+        api.get('/admin/anomalies?limit=10'), // Lấy 10 phiên bất thường gần nhất
+        api.get('/admin/logs?limit=1'), // Lấy tổng số tất cả login logs
       ]);
 
       if (statsRes.data.success) {
         // Map old stats structure to new
         const oldStats = statsRes.data.stats;
+        
+        // Calculate anomaly stats
+        let totalLogins = 0;
+        let anomalousLogins = 0;
+        
+        console.log('[AdminDashboard] allLoginsRes:', allLoginsRes.data);
+        console.log('[AdminDashboard] anomalyRes:', anomalyRes.data);
+        
+        // Total logins from /admin/logs
+        // API structure: { success: true, logs: [...], stats: { total: X } }
+        if (allLoginsRes.data?.stats?.total !== undefined) {
+          totalLogins = parseInt(allLoginsRes.data.stats.total) || 0;
+        } else if (allLoginsRes.data?.total !== undefined) {
+          totalLogins = parseInt(allLoginsRes.data.total) || 0;
+        } else {
+          // Fallback: If no total, assume anomalousLogins as minimum
+          totalLogins = 0;
+        }
+        
+        // Anomalous logins from /admin/anomalies (đã filter is_anomaly = true)
+        if (anomalyRes.data.success) {
+          anomalousLogins = anomalyRes.data.data.total || 0;
+        }
+        
+        // If totalLogins is still 0 or less than anomalousLogins, fix it
+        if (totalLogins < anomalousLogins) {
+          totalLogins = anomalousLogins; // At minimum, total must equal anomalous
+        }
+        
+        console.log('[AdminDashboard] Calculated:', { totalLogins, anomalousLogins });
+        
         setStats({
           totalUsers: oldStats.totalDIDs || 0,
           totalCCCDs: oldStats.preVerified?.verified || 0,
           pendingRequests: oldStats.serviceRequests?.pending || 0,
           approvedRequests: oldStats.serviceRequests?.approved || 0,
           rejectedRequests: oldStats.serviceRequests?.rejected || 0,
+          totalLogins: totalLogins,
+          anomalousLogins: anomalousLogins,
+          normalLogins: Math.max(0, totalLogins - anomalousLogins), // Đảm bảo không âm
         });
       }
 
       if (requestsRes.data.success) {
         setRecentRequests(requestsRes.data.data || []);
+      }
+
+      // Get recent anomalous logins (top 10)
+      if (anomalyRes.data.success && anomalyRes.data.data.logs) {
+        setAnomalousLogins(anomalyRes.data.data.logs.slice(0, 10));
       }
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Không thể tải dữ liệu dashboard';
@@ -186,7 +244,7 @@ const AdminDashboard = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    CCCD Pre-verified
+                    Xác minh người dùng
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
                     {stats.totalCCCDs}
@@ -212,7 +270,7 @@ const AdminDashboard = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Chờ duyệt
+                    Số hồ sơ chờ duyệt
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
                     {stats.pendingRequests}
@@ -238,7 +296,7 @@ const AdminDashboard = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="text.secondary">
-                    Đã duyệt
+                    Số hồ sơ đã duyệt
                   </Typography>
                   <Typography variant="h5" fontWeight="bold">
                     {stats.approvedRequests}
@@ -249,39 +307,53 @@ const AdminDashboard = () => {
           </Card>
         </Box>
 
-        {/* Request Summary & Recent Requests */}
+        {/* Anomaly Detection Summary & Recent Requests */}
         <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
           <Card sx={{ flex: '1 1 300px', minWidth: 300, maxWidth: 400 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TrendingUp /> Tổng quan yêu cầu
+                <Shield /> Tổng quan đăng nhập bất thường
               </Typography>
               <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <HourglassEmpty sx={{ color: 'warning.main' }} />
-                    <Typography>Chờ duyệt</Typography>
+                    <TrendingUp sx={{ color: 'info.main' }} />
+                    <Typography>Tổng phiên đăng nhập</Typography>
                   </Box>
-                  <Typography variant="h6" fontWeight="bold" color="warning.main">
-                    {stats.pendingRequests}
+                  <Typography variant="h6" fontWeight="bold" color="info.main">
+                    {stats.totalLogins || 0}
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Warning sx={{ color: 'error.main' }} />
+                    <Typography>Phiên bất thường</Typography>
+                  </Box>
+                  <Typography variant="h6" fontWeight="bold" color="error.main">
+                    {stats.anomalousLogins || 0}
                   </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <CheckCircle sx={{ color: 'success.main' }} />
-                    <Typography>Đã duyệt</Typography>
+                    <Typography>Phiên bình thường</Typography>
                   </Box>
                   <Typography variant="h6" fontWeight="bold" color="success.main">
-                    {stats.approvedRequests}
+                    {stats.normalLogins || 0}
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Cancel sx={{ color: 'error.main' }} />
-                    <Typography>Đã từ chối</Typography>
-                  </Box>
-                  <Typography variant="h6" fontWeight="bold" color="error.main">
-                    {stats.rejectedRequests}
+                <Box sx={{ 
+                  mt: 2, 
+                  p: 2, 
+                  bgcolor: stats.anomalousLogins && stats.totalLogins 
+                    ? ((stats.anomalousLogins / stats.totalLogins) > 0.3 ? 'error.light' : 'warning.light')
+                    : 'grey.100',
+                  borderRadius: 1 
+                }}>
+                  <Typography variant="body2" fontWeight="bold" textAlign="center">
+                    Tỷ lệ bất thường: {stats.totalLogins 
+                      ? ((stats.anomalousLogins || 0) / stats.totalLogins * 100).toFixed(1)
+                      : 0}%
                   </Typography>
                 </Box>
               </Box>
@@ -291,40 +363,54 @@ const AdminDashboard = () => {
           <Card sx={{ flex: '1 1 600px' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Assignment /> Yêu cầu gần đây
+                <Warning /> Phiên đăng nhập bất thường gần đây
               </Typography>
-              {recentRequests.length === 0 ? (
-                <EmptyState message="Chưa có yêu cầu nào" type="info" />
+              {anomalousLogins.length === 0 ? (
+                <EmptyState message="Không có phiên đăng nhập bất thường" type="info" />
               ) : (
                 <TableContainer>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>ID</TableCell>
-                        <TableCell>Người nộp</TableCell>
-                        <TableCell>Dịch vụ</TableCell>
-                        <TableCell>Trạng thái</TableCell>
+                        <TableCell>Người dùng</TableCell>
+                        <TableCell>IP / Vị trí</TableCell>
+                        <TableCell>Điểm rủi ro</TableCell>
+                        <TableCell>Lý do</TableCell>
                         <TableCell>Thời gian</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {recentRequests.map((request) => (
-                        <TableRow key={request.id} hover>
-                          <TableCell>#{request.id}</TableCell>
+                      {anomalousLogins.map((login) => (
+                        <TableRow key={login.id} hover sx={{ bgcolor: 'error.lighter' }}>
                           <TableCell>
                             <Typography variant="body2" fontWeight="bold">
-                              {request.full_name || 'N/A'}
+                              {login.username || 'N/A'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+                              {login.walletAddress.substring(0, 10)}...
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            {serviceTypeLabels[request.service_type] || request.service_type}
+                            <Typography variant="body2">{login.ipAddress}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {login.location || 'N/A'}
+                            </Typography>
                           </TableCell>
                           <TableCell>
-                            <StatusChip status={request.status} />
+                            <Chip 
+                              label={(login.riskScore * 100).toFixed(1) + '%'} 
+                              color={login.riskScore > 0.7 ? 'error' : 'warning'}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="caption" color="text.secondary">
+                              {login.anomalyReason || 'Không rõ'}
+                            </Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" color="text.secondary">
-                              {formatDate(request.created_at)}
+                              {formatDate(login.loginTime)}
                             </Typography>
                           </TableCell>
                         </TableRow>

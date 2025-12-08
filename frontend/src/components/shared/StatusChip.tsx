@@ -6,8 +6,8 @@ interface StatusChipProps {
 }
 
 const statusConfig = {
-  pending: { color: 'warning' as const, label: 'Chờ duyệt' },
-  approved: { color: 'success' as const, label: 'Đã duyệt' },
+  pending: { color: 'warning' as const, label: 'Chờ xác minh' },
+  approved: { color: 'success' as const, label: 'Đã xác minh' },
   rejected: { color: 'error' as const, label: 'Đã từ chối' },
   completed: { color: 'success' as const, label: 'Hoàn tất' },
   active: { color: 'success' as const, label: 'Hoạt động' },

@@ -31,9 +31,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Tổng quan', path: '/admin/dashboard', icon: <DashboardIcon /> },
-  { label: 'Người dùng đã đăng ký', path: '/admin/users', icon: <PeopleIcon /> },
-  { label: 'CCCD Pre-verified', path: '/admin/cccd', icon: <BadgeIcon /> },
-  { label: 'Yêu cầu dịch vụ', path: '/admin/services', icon: <AssignmentIcon /> },
+  { label: 'Quản lý người dùng', path: '/admin/users', icon: <PeopleIcon /> },
+  { label: 'Xác minh người dùng', path: '/admin/cccd', icon: <BadgeIcon /> },
+  { label: 'Quản lý dịch vụ công', path: '/admin/services', icon: <AssignmentIcon /> },
   { label: 'Lịch sử đăng nhập', path: '/admin/logs', icon: <HistoryIcon /> },
   { label: 'Blockchain Explorer', path: '/admin/blockchain', icon: <BlockchainIcon /> },
 ];

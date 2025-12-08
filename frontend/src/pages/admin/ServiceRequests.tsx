@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import {
   Container, Typography, Paper, Tabs, Tab, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Button, Box,
-  Dialog, DialogTitle, DialogContent, DialogActions, TextField
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, InputAdornment
 } from '@mui/material';
-import { Refresh, CheckCircle, Cancel } from '@mui/icons-material';
+import { Refresh, CheckCircle, Cancel, Search } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { ethers } from 'ethers';
 import AdminLayout from '../../components/layout/AdminLayout';
@@ -15,7 +15,7 @@ import api from '../../services/api';
 import { useMetaMask } from '../../hooks/useMetaMask';
 
 // Địa chỉ hợp đồng từ .env
-const SERVICE_CONTRACT_ADDRESS = import.meta.env.SERVICE_CONTRACT_ADDRESS;
+const SERVICE_CONTRACT_ADDRESS = import.meta.env.VITE_SERVICE_CONTRACT_ADDRESS;
 
 // ABI cho hợp đồng dịch vụ
 const SERVICE_CONTRACT_ABI = [
@@ -106,6 +106,7 @@ const ServiceRequests = () => {
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<ServiceRequest | null>(null);
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -162,7 +163,12 @@ const ServiceRequests = () => {
     setProcessing(true);
 
     try {
-      // 1. Get provider from MetaMask
+      // 1. Validate contract address
+      if (!SERVICE_CONTRACT_ADDRESS) {
+        throw new Error('Service contract address chưa được cấu hình. Vui lòng kiểm tra file .env');
+      }
+
+      // 2. Get provider from MetaMask
       if (!window.ethereum) {
         throw new Error('MetaMask không được cài đặt');
       }
@@ -170,14 +176,14 @@ const ServiceRequests = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      // 2. Create contract instance with signer
+      // 3. Create contract instance with signer
       const contract = new ethers.Contract(
         SERVICE_CONTRACT_ADDRESS,
         SERVICE_CONTRACT_ABI,
         signer
       );
 
-      // 3. Prepare transaction data
+      // 4. Prepare transaction data
       const cccdNumber = request.cccd_number || request.service_data?.cccd_number || '';
       if (!cccdNumber) {
         throw new Error('Không tìm thấy số CCCD trong yêu cầu');
@@ -192,7 +198,7 @@ const ServiceRequests = () => {
 
       enqueueSnackbar('Đang chờ xác nhận từ MetaMask...', { variant: 'info' });
 
-      // 4. Call smart contract from frontend (MetaMask will pop up)
+      // 5. Call smart contract from frontend (MetaMask will pop up)
       const tx = await contract.registerService(
         request.wallet_address,
         cccdHash,
@@ -202,7 +208,7 @@ const ServiceRequests = () => {
 
       enqueueSnackbar('Đang xử lý giao dịch trên blockchain...', { variant: 'info' });
 
-      // 5. Wait for transaction confirmation
+      // 6. Wait for transaction confirmation
       const receipt = await tx.wait();
 
       // 6. Send transaction hash to backend for database update
@@ -289,9 +295,20 @@ const ServiceRequests = () => {
     });
   };
 
-  const filteredRequests = tabValue === 0
+  const filteredRequests = (tabValue === 0
     ? requests.filter(r => r.status === 'pending')
-    : requests;
+    : requests
+  ).filter((request) => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      request.id.toString().includes(searchLower) ||
+      request.wallet_address.toLowerCase().includes(searchLower) ||
+      request.full_name?.toLowerCase().includes(searchLower) ||
+      request.cccd_number?.includes(searchLower) ||
+      request.service_type.toLowerCase().includes(searchLower) ||
+      serviceTypeLabels[request.service_type]?.toLowerCase().includes(searchLower)
+    );
+  });
 
   return (
     <AdminLayout>
@@ -312,6 +329,24 @@ const ServiceRequests = () => {
             <Tab label="Chờ duyệt" />
             <Tab label="Tất cả" />
           </Tabs>
+
+          {/* Search Box */}
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Tìm kiếm theo ID, tên, địa chỉ ví, CCCD, loại dịch vụ..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
 
           <TabPanel value={tabValue} index={0}>
             {loading ? (

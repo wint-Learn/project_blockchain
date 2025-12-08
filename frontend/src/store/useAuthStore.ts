@@ -7,6 +7,17 @@ interface User {
   cccdHash?: string;
   anomalyScore?: number;
   cccdInfo?: CCCDInfo; // Thông tin CCCD parsed (chỉ lưu trong session)
+  loginRisk?: {
+    riskScore: number;
+    isAnomaly: boolean;
+    location?: {
+      full: string;
+      city?: string;
+      country?: string;
+      countryCode?: string;
+    };
+    details?: any;
+  };
 }
 
 interface AuthState {

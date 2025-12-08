@@ -5,7 +5,7 @@ import {
   DialogTitle, DialogContent, DialogActions, Button,
   Stack, Divider, TextField, IconButton, InputAdornment,
 } from '@mui/material';
-import { Search, Refresh, Visibility } from '@mui/icons-material';
+import { Search, Refresh, Visibility, Block, LockOpen } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import AdminLayout from '../../components/layout/AdminLayout';
 import LoadingSpinner from '../../components/shared/LoadingSpinner';
@@ -23,6 +23,9 @@ interface User {
   date_of_birth?: string;
   gender?: string;
   address?: string;
+  is_locked?: boolean;
+  locked_reason?: string;
+  locked_at?: string;
 }
 
 const RegisteredUsers = () => {
@@ -33,6 +36,9 @@ const RegisteredUsers = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [lockDialogOpen, setLockDialogOpen] = useState(false);
+  const [lockReason, setLockReason] = useState('');
+  const [userToLock, setUserToLock] = useState<User | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -73,6 +79,66 @@ const RegisteredUsers = () => {
     setSelectedUser(null);
   };
 
+  const handleOpenLockDialog = (user: User) => {
+    setUserToLock(user);
+    setLockReason('');
+    setLockDialogOpen(true);
+  };
+
+  const handleCloseLockDialog = () => {
+    setLockDialogOpen(false);
+    setUserToLock(null);
+    setLockReason('');
+  };
+
+  const handleLockUser = async () => {
+    if (!userToLock) return;
+    if (!lockReason.trim()) {
+      enqueueSnackbar('Vui lòng nhập lý do khóa tài khoản', { variant: 'warning' });
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/admin/users/${userToLock.id}/lock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: lockReason }),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        enqueueSnackbar('Đã khóa tài khoản người dùng thành công', { variant: 'success' });
+        handleCloseLockDialog();
+        fetchUsers(); // Refresh list
+      } else {
+        enqueueSnackbar(data.message || 'Không thể khóa tài khoản', { variant: 'error' });
+      }
+    } catch (err: any) {
+      enqueueSnackbar(err.message || 'Không thể khóa tài khoản', { variant: 'error' });
+    }
+  };
+
+  const handleUnlockUser = async (user: User) => {
+    try {
+      const response = await fetch(`http://localhost:3000/api/admin/users/${user.id}/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        enqueueSnackbar('Đã mở khóa tài khoản người dùng thành công', { variant: 'success' });
+        fetchUsers(); // Refresh list
+      } else {
+        enqueueSnackbar(data.message || 'Không thể mở khóa tài khoản', { variant: 'error' });
+      }
+    } catch (err: any) {
+      enqueueSnackbar(err.message || 'Không thể mở khóa tài khoản', { variant: 'error' });
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('vi-VN', {
@@ -95,7 +161,7 @@ const RegisteredUsers = () => {
   });
 
   return (
-    <AdminLayout title="Người dùng đã đăng ký">
+    <AdminLayout title="Quản lý người dùng">
       <Container maxWidth="xl" sx={{ py: 2 }}>
         {/* Header & Actions */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -179,6 +245,25 @@ const RegisteredUsers = () => {
                         <IconButton size="small" color="primary" onClick={() => handleViewDetail(user)}>
                           <Visibility />
                         </IconButton>
+                        {user.is_locked ? (
+                          <IconButton 
+                            size="small" 
+                            color="success" 
+                            onClick={() => handleUnlockUser(user)}
+                            title="Mở khóa tài khoản"
+                          >
+                            <LockOpen />
+                          </IconButton>
+                        ) : (
+                          <IconButton 
+                            size="small" 
+                            color="error" 
+                            onClick={() => handleOpenLockDialog(user)}
+                            title="Khóa tài khoản"
+                          >
+                            <Block />
+                          </IconButton>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -196,6 +281,44 @@ const RegisteredUsers = () => {
             </Typography>
           </Box>
         )}
+
+        {/* Lock Dialog */}
+        <Dialog open={lockDialogOpen} onClose={handleCloseLockDialog} maxWidth="sm" fullWidth>
+          <DialogTitle>Khóa tài khoản người dùng</DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={2}>
+              {userToLock && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Bạn đang khóa tài khoản của:
+                  </Typography>
+                  <Typography variant="body1" fontWeight="bold">
+                    {userToLock.full_name || 'N/A'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                    {userToLock.wallet_address}
+                  </Typography>
+                </Box>
+              )}
+              <TextField
+                label="Lý do khóa tài khoản"
+                placeholder="Nhập lý do khóa tài khoản..."
+                multiline
+                rows={4}
+                value={lockReason}
+                onChange={(e) => setLockReason(e.target.value)}
+                fullWidth
+                required
+              />
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseLockDialog}>Hủy</Button>
+            <Button onClick={handleLockUser} variant="contained" color="error">
+              Khóa tài khoản
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Detail Dialog */}
         <Dialog open={detailDialogOpen} onClose={handleCloseDetail} maxWidth="md" fullWidth>

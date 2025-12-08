@@ -24,6 +24,26 @@ router.get('/users',
 );
 
 /**
+ * @route   POST /api/admin/users/:userId/lock
+ * @desc    Khóa tài khoản người dùng
+ * @access  Admin
+ */
+router.post('/users/:userId/lock',
+  auditMiddleware('lock_user', (req) => req.params.userId),
+  usersController.lockUser
+);
+
+/**
+ * @route   POST /api/admin/users/:userId/unlock
+ * @desc    Mở khóa tài khoản người dùng
+ * @access  Admin
+ */
+router.post('/users/:userId/unlock',
+  auditMiddleware('unlock_user', (req) => req.params.userId),
+  usersController.unlockUser
+);
+
+/**
  * @route   GET /api/admin/login-logs
  * @desc    Xem login logs với geolocation và anomaly detection
  * @access  Admin

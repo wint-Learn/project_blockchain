@@ -4,12 +4,14 @@ import {
   Container, Box, Typography, Button, Paper, Alert, CircularProgress
 } from '@mui/material';
 import { AccountBalanceWallet } from '@mui/icons-material';
+import { useSnackbar } from 'notistack';
 import { useMetaMask } from '../hooks/useMetaMask';
 import { getLoginMessage, loginWithMetaMask } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 
 const LoginMetaMask: React.FC = () => {
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
   const { isInstalled, isConnected, account, connect, signMessage, error: metamaskError } = useMetaMask();
   const setUser = useAuthStore((state) => state.setUser);
   const user = useAuthStore((state) => state.user);
@@ -66,11 +68,38 @@ const LoginMetaMask: React.FC = () => {
         message, // CRITICAL: Phải gửi message đã ký để backend verify đúng
       });
 
-      // 5: Lưu user vào store
-      setUser(loginResponse.data.user);
+      // 5: Kiểm tra cảnh báo bất thường
+      if (loginResponse.data.loginRisk?.isAnomaly) {
+        const riskScore = loginResponse.data.loginRisk.riskScore || 0;
+        const riskPercent = (riskScore * 100).toFixed(1);
+        const location = loginResponse.data.loginRisk.location?.full || 'Không xác định';
+        
+        enqueueSnackbar(
+          `⚠️ Phát hiện đăng nhập bất thường! Điểm rủi ro: ${riskPercent}% - Vị trí: ${location}`,
+          { 
+            variant: 'warning',
+            autoHideDuration: 8000,
+            anchorOrigin: { vertical: 'top', horizontal: 'center' }
+          }
+        );
+        
+        console.warn('[Login] Anomaly detected:', {
+          riskScore: riskPercent + '%',
+          location,
+          details: loginResponse.data.loginRisk.details
+        });
+      } else {
+        enqueueSnackbar('Đăng nhập thành công!', { variant: 'success' });
+      }
+
+      // 6: Lưu user vào store (bao gồm loginRisk)
+      setUser({
+        ...loginResponse.data.user,
+        loginRisk: loginResponse.data.loginRisk
+      });
       setStep('done');
 
-      // 6: Chuyển đến dashboard
+      // 7: Chuyển đến dashboard
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
