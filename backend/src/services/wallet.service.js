@@ -105,7 +105,7 @@ function generateLoginMessage(address) {
   const timestamp = Date.now();
   const date = new Date(timestamp).toLocaleString('vi-VN');
   
-  return `Đăng nhập vào hệ thống e-Government\n\nĐịa chỉ ví: ${address}\nThời gian: ${date}\nTimestamp: ${timestamp}\n\nKý tin nhắn này để xác thực danh tính.`;
+  return `Đăng nhập vào hệ thống\n\nĐịa chỉ ví: ${address}\nThời gian: ${date}\nTimestamp: ${timestamp}\n\nKý tin nhắn này để xác thực danh tính.`;
 }
 
 module.exports = {

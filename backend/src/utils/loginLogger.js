@@ -6,11 +6,6 @@
 
 const axios = require('axios');
 
-/**
- * Get IP geolocation from free API
- * @param {string} ip - IP address
- * @returns {Promise<Object>} Location data
- */
 async function getIPLocation(ip) {
   // Skip localhost/private IPs
   if (ip === '::1' || ip === '127.0.0.1' || ip.startsWith('192.168.') || ip.startsWith('10.')) {

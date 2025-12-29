@@ -15,7 +15,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 interface UserLayoutProps {
   children: ReactNode;
   title: string;
-  showBackButton?: boolean;
+  showBackButton?: boolean; 
 }
 
 const UserLayout = ({ children, title, showBackButton = true }: UserLayoutProps) => {
@@ -40,25 +40,27 @@ const UserLayout = ({ children, title, showBackButton = true }: UserLayoutProps)
     handleMenuClose();
   };
 
-  const getUserInitials = () => {
-    if (!user?.address) return '??';
-    return user.address.substring(2, 4).toUpperCase();
-  };
-
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ 
+      minHeight: '100vh', 
+      width: '100%', // Thêm width 100%
+      bgcolor: 'background.default' 
+    }}>
       {/* AppBar */}
-      <AppBar position="sticky">
+      <AppBar position="sticky"> 
         <Toolbar>
+          
+          {/* Btn back */}
           {showBackButton && (
             <IconButton
               edge="start"
               color="inherit"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/dashboard')} 
               sx={{ mr: 2 }}
             >
               <ArrowBack />
-            </IconButton>
+              <Typography variant="button" sx={{ ml: 1 }}>Quay lại</Typography>
+            </IconButton>            
           )}
           
           <Typography variant="h6" component="div" sx={{ flexGrow: 1, textAlign: 'center' }}>
@@ -69,10 +71,11 @@ const UserLayout = ({ children, title, showBackButton = true }: UserLayoutProps)
           <Button
             color="inherit"
             onClick={handleMenuOpen}
-            startIcon={<Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.dark' }}>{getUserInitials()}</Avatar>}
+            startIcon={<Avatar sx={{ width: 32, height: 32 }}></Avatar>}
             endIcon={<KeyboardArrowDown />}
           >
-            {user?.address.substring(0, 6)}...{user?.address.substring(38)}
+            {/* Hiển thị tên người dùng */}
+            {user?.cccdInfo?.fullName || 'Người dùng'}
           </Button>
 
           <Menu
@@ -118,7 +121,13 @@ const UserLayout = ({ children, title, showBackButton = true }: UserLayoutProps)
       </AppBar>
 
       {/* Content */}
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ 
+        width: '100%',
+        maxWidth: '1400px', // Giới hạn width tối đa
+        mx: 'auto', // Căn giữa
+        px: { xs: 2, sm: 3, md: 4, lg: '10%' }, // Padding responsive: mobile 16px, desktop 10%
+        py: 3 
+      }}>
         {children}
       </Box>
     </Box>

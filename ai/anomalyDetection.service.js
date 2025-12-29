@@ -76,7 +76,7 @@ function combineRisks(riskTime, riskIP, riskUA) {
  */
 async function calculateLoginRisk(pool, userId, ipAddress, userAgent, loginAt) {
   try {
-    // Fetch recent login history (last 50 successful logins or 30 days)
+    // Lấy lịch sử đăng nhập của user từ database
     const historyQuery = `
       SELECT 
         DATE_EXTRACT('hour', login_time AT TIME ZONE 'UTC') as login_hour,
@@ -92,7 +92,7 @@ async function calculateLoginRisk(pool, userId, ipAddress, userAgent, loginAt) {
     const historyResult = await pool.query(historyQuery, [userId]);
     const history = historyResult.rows;
 
-    // If no history, return low-risk default
+    // Nếu không có lịch sử đăng nhập, coi là user mới, rủi ro thấp
     if (history.length === 0) {
       return {
         riskScore: 0.2,
@@ -106,31 +106,31 @@ async function calculateLoginRisk(pool, userId, ipAddress, userAgent, loginAt) {
       };
     }
 
-    // 1. TIME-BASED ANALYSIS
-    // Extract hours from login history
+    // 1. Phân tích thời gian đăng nhập
+    // Trích xuất giờ từ lịch sử đăng nhập
     const loginHours = history.map(r => parseInt(r.login_hour) || 0);
     const meanHour = loginHours.reduce((a, b) => a + b, 0) / loginHours.length;
     
-    // Calculate standard deviation
+    // Tính độ lệch chuẩn
     const variance = loginHours.reduce((sum, h) => sum + Math.pow(h - meanHour, 2), 0) / loginHours.length;
     const stdHour = Math.sqrt(variance);
 
-    // Current login hour (UTC)
+    // Giờ đăng nhập hiện tại (UTC)
     const currentHour = loginAt.getUTCHours();
     const timeZScore = calculateZScore(currentHour, meanHour, stdHour);
     const riskTime = getTimeRisk(timeZScore);
 
-    // 2. IP-BASED ANALYSIS
+    // 2. Phân tích dựa trên IP
     const knownIPs = new Set(history.map(r => r.ip_address));
     const isNewIP = !knownIPs.has(ipAddress);
     const riskIP = getIPRisk(isNewIP);
 
-    // 3. USER-AGENT-BASED ANALYSIS
+    // 3. Phân tích dựa trên User-Agent
     const knownUAs = new Set(history.map(r => r.user_agent).filter(ua => ua));
     const isNewUA = !knownUAs.has(userAgent);
     const riskUA = getUserAgentRisk(isNewUA);
 
-    // 4. COMBINE RISKS
+    // 4. KẾT HỢP RỦI RO
     const riskScore = combineRisks(riskTime, riskIP, riskUA);
     const isAnomaly = riskScore >= 0.7;
 
@@ -161,7 +161,7 @@ async function calculateLoginRisk(pool, userId, ipAddress, userAgent, loginAt) {
 
   } catch (error) {
     console.error('Anomaly detection error:', error.message);
-    // Fail gracefully - don't break login flow
+    // Trong trường hợp lỗi, trả về rủi ro thấp để không chặn đăng nhập
     return {
       riskScore: 0.0,
       isAnomaly: false,

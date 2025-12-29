@@ -15,12 +15,6 @@ async function register(req, res) {
   const { pool, contract, provider, logger } = req.app.locals;
   
   try {
-    // 🔍 DEBUG: Log raw request body
-    logger.info('🔍 DEBUG: Raw req.body', { 
-      keys: Object.keys(req.body),
-      walletAddress: req.body.walletAddress,
-      signature: req.body.signature ? 'EXISTS' : 'MISSING'
-    });
     
     const { 
       cccdNumber, 
@@ -34,15 +28,6 @@ async function register(req, res) {
       walletAddress,
       signature
     } = req.body;
-    
-    logger.info('Registration attempt started (MetaMask flow)', { 
-      cccdNumber: cccdNumber.slice(0, 4) + '***',
-      phoneNumber: phoneNumber.slice(0, 4) + '***',
-      withPreVerification: !!verificationToken,
-      useExistingWallet: !!walletAddress,
-      hasWalletAddress: !!walletAddress,
-      hasSignature: !!signature
-    });
     
     let wallet;
     let qrCode = null;

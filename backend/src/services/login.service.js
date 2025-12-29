@@ -5,7 +5,6 @@
 
 const { hashCCCD } = require('../utils/crypto-utils');
 const ethers = require('ethers');
-const { logLogin } = require('../utils/loginLogger');
 const { calculateLoginRisk } = require('../../../ai/anomalyDetection.service');
 const { createLoginLog } = require('../../../ai/loginLogs.repository');
 const axios = require('axios');

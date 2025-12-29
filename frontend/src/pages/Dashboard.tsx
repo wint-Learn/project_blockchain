@@ -12,14 +12,7 @@ import { getDIDInfo, getLogs, getUserProfile } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import UserLayout from '../components/layout/UserLayout';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
-
-interface DIDInfo {
-  address: string;
-  publicKey: string;
-  cccdHashOnChain: string;
-  hasMetadata: boolean;
-  registeredAt: string;
-}
+import type { DIDInfo } from '../types/cccd';
 
 interface LogEntry {
   id: number;
@@ -34,14 +27,14 @@ export default function Dashboard() {
   const [didInfo, setDidInfo] = useState<DIDInfo | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { user, setUser } = useAuthStore();
 
   useEffect(() => {
     console.log('[Dashboard] useEffect triggered, user:', user);
-    
+
     if (!user?.address) {
       console.log('[Dashboard] No user address, redirecting to /login');
       navigate('/login');
@@ -65,13 +58,13 @@ export default function Dashboard() {
       console.log('[Dashboard] Logs Response:', logsResponse);
       setLogs(logsResponse.data.logs || []);
 
-      // 🆕 Nếu user chưa có cccdInfo, fetch từ getUserProfile
+      // Nếu user chưa có cccdInfo, fetch từ getUserProfile
       if (!user?.cccdInfo) {
         console.log('[Dashboard] User missing cccdInfo, fetching from profile API...');
         try {
           const profileResponse = await getUserProfile(user!.address);
           console.log('[Dashboard] Profile Response:', profileResponse);
-          
+
           if (profileResponse.data?.data?.cccdInfo) {
             // Cập nhật user store với cccdInfo
             setUser({
@@ -83,7 +76,6 @@ export default function Dashboard() {
           }
         } catch (profileError) {
           console.warn('[Dashboard] Failed to fetch cccdInfo:', profileError);
-          // Non-blocking error
         }
       }
     } catch (error: any) {
@@ -108,10 +100,16 @@ export default function Dashboard() {
   }
 
   return (
-    <UserLayout title="Dashboard" showBackButton={false}>
+    <UserLayout title="Trang chủ" showBackButton={false}>
       <Container maxWidth="lg" sx={{ py: 3 }}>
         {/* Stats Cards */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2, mb: 4 }}>
+        <Box sx={{ 
+          display: 'grid', 
+          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' },
+          gap: 2, 
+          mb: 4 
+        }}>
+          
           <Card>
             <CardContent>
               <Stack direction="row" spacing={2} alignItems="center">
@@ -143,9 +141,9 @@ export default function Dashboard() {
               <Stack direction="row" spacing={2} alignItems="center">
                 <CalendarToday color="info" sx={{ fontSize: 40 }} />
                 <Box>
-                  <Typography variant="body2" color="text.secondary">Ngày tạo</Typography>
+                  <Typography variant="body2" color="text.secondary">Ngày đăng ký</Typography>
                   <Typography variant="h6">
-                    {didInfo ? new Date(didInfo.registeredAt).toLocaleDateString('vi-VN') : 'N/A'}
+                    {didInfo?.registeredAt ? new Date(didInfo.registeredAt).toLocaleDateString('vi-VN') : 'N/A'}
                   </Typography>
                 </Box>
               </Stack>
@@ -175,69 +173,22 @@ export default function Dashboard() {
 
           {didInfo && (
             <Box sx={{ mt: 2 }}>
+              {/* Chỉ hiện 6 ký tự đầu và 4 ký tự cuối. */}
               <Typography variant="body1">
-                <strong>Địa chỉ ví:</strong> {didInfo.address}
+                <strong>Địa chỉ ví liên kết:</strong> {didInfo.address.slice(0, 6)}...{didInfo.address.slice(-4)}
               </Typography>
               <Typography variant="body1" sx={{ mt: 1 }}>
-                <strong>CCCD Hash:</strong> {didInfo.cccdHashOnChain}
+                <strong>CCCD Hash:</strong> {didInfo.cccdHashOnChain.slice(0,6)}...{didInfo.cccdHashOnChain.slice(-4)} 
               </Typography>
               <Typography variant="body1" sx={{ mt: 1 }}>
                 <strong>Public Key:</strong>{' '}
-                {didInfo.publicKey.slice(0, 20)}...{didInfo.publicKey.slice(-20)}
+                {didInfo.publicKey.slice(0, 6)}...{didInfo.publicKey.slice(-4)}
               </Typography>
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                <strong>Thời điểm đăng ký:</strong>{' '}
-                {new Date(didInfo.registeredAt).toLocaleString('vi-VN')}
-              </Typography>
-
-              {/* Hiển thị thông tin CCCD nếu có */}
-              {user?.cccdInfo && (
-                <Box sx={{ mt: 3, p: 2, bgcolor: 'background.default', borderRadius: 2 }}>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    📋 Thông tin CCCD
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 1 }}>
-                    <strong>Số CCCD:</strong> {user.cccdInfo.cccdNumber}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 1 }}>
-                    <strong>Họ và tên:</strong> {user.cccdInfo.fullName}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 1 }}>
-                    <strong>Ngày sinh:</strong> {user.cccdInfo.dateOfBirth}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 1 }}>
-                    <strong>Giới tính:</strong> {user.cccdInfo.gender}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 1 }}>
-                    <strong>Địa chỉ:</strong> {user.cccdInfo.address}
-                  </Typography>
-                  <Typography variant="body1" sx={{ mt: 1 }}>
-                    <strong>Ngày cấp:</strong> {user.cccdInfo.issueDate}
-                  </Typography>
-                  {user.cccdInfo.oldNumber && (
-                    <Typography variant="body2" sx={{ mt: 1 }} color="text.secondary">
-                      <strong>Số CMND cũ:</strong> {user.cccdInfo.oldNumber}
-                    </Typography>
-                  )}
-                  <Alert severity="info" sx={{ mt: 2 }}>
-                    <strong>Lưu ý:</strong> Thông tin này chỉ hiển thị trong session hiện tại và không được lưu trữ lâu dài.
-                  </Alert>
-                </Box>
-              )}
-
-              {didInfo.hasMetadata && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="body1" component="div">
-                    <strong>Trạng thái Blockchain:</strong>{' '}
-                    <Chip label="Đã đăng ký on-chain" color="success" size="small" />
-                  </Typography>
-                </Box>
-              )}
 
               {user?.loginRisk?.isAnomaly && (
                 <Alert severity="warning" sx={{ mt: 2 }}>
                   <Typography variant="body2" fontWeight="bold" gutterBottom>
-                    ⚠️ Phát hiện đăng nhập bất thường!
+                    Phát hiện đăng nhập bất thường!
                   </Typography>
                   <Typography variant="body2">
                     Điểm rủi ro: <strong>{((user.loginRisk.riskScore || 0) * 100).toFixed(1)}%</strong>

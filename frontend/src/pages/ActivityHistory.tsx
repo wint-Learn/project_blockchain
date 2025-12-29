@@ -8,6 +8,7 @@ import { Refresh, Login, Description } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useAuthStore } from '../store/useAuthStore';
 import UserLayout from '../components/layout/UserLayout';
+import api from '../services/api';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
 import EmptyState from '../components/shared/EmptyState';
 import StatusChip from '../components/shared/StatusChip';
@@ -87,31 +88,19 @@ const ActivityHistory = () => {
 
     try {
       // Fetch login activities
-      const loginResponse = await fetch(
-        `http://localhost:3000/api/activity/login?walletAddress=${user.address}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const loginData = await loginResponse.json();
-      if (loginData.success) {
-        setLoginActivities(loginData.data || []);
+      const loginResponse = await api.get('/activity/login', {
+        params: { walletAddress: user.address }
+      });
+      if (loginResponse.data.success) {
+        setLoginActivities(loginResponse.data.data || []);
       }
 
       // Fetch service activities
-      const serviceResponse = await fetch(
-        `http://localhost:3000/api/services/my-requests?walletAddress=${user.address}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-      const serviceData = await serviceResponse.json();
-      if (serviceData.success) {
-        setServiceActivities(serviceData.data || []);
+      const serviceResponse = await api.get('/services/my-requests', {
+        params: { walletAddress: user.address }
+      });
+      if (serviceResponse.data.success) {
+        setServiceActivities(serviceResponse.data.data || []);
       }
     } catch (err: any) {
       const errorMsg = err.message || 'Không thể tải lịch sử hoạt động';

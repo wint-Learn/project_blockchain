@@ -12,7 +12,7 @@ const logger = require('../../config/logger');
  */
 async function requestOTP(req, res) {
   try {
-    const { cccdNumber, phoneNumber } = req.body;
+    const { cccdNumber, phoneNumber, fullName, dateOfBirth, gender, address, issueDate } = req.body;
     
     // Validation
     if (!cccdNumber || !phoneNumber) {
@@ -41,11 +41,13 @@ async function requestOTP(req, res) {
     logger.info('Request OTP API called', { 
       cccdNumber: cccdNumber.slice(0, 4) + '****',
       phoneNumber: phoneNumber.slice(0, 4) + '****',
+      fullName: fullName ? fullName.slice(0, 3) + '***' : undefined,
       ip: req.ip 
     });
     
     const { pool } = req.app.locals;
-    const result = await requestOTPService(cccdNumber, phoneNumber, pool, logger);
+    const cccdInfo = { fullName, dateOfBirth, gender, address, issueDate };
+    const result = await requestOTPService(cccdNumber, phoneNumber, cccdInfo, pool, logger);
     
     if (!result.success) {
       return res.status(400).json({

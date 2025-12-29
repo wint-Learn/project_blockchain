@@ -23,10 +23,10 @@ async function createDIDOnChain({ cccdHash, publicKey, userAddress, contract, pr
   try {
     const adminWallet = getAdminWallet(provider);
 
-    // Pre-flight checks to give clearer errors instead of opaque estimateGas failures
+    // Kiểm tra trước khi thực hiện giao dịch để tránh lỗi không rõ ràng khi ước lượng gas  
     logger.info('Pre-flight blockchain checks', { contractAddress: contract.target || contract.address, admin: adminWallet.address });
 
-    // 1) Check if CCCD already mapped on-chain
+    // 1) Kiểm tra xem CCCD đã được ánh xạ trên chuỗi chưa
     try {
       const mapped = await contract.cccdToAddress(cccdHash);
       if (mapped && mapped !== '0x0000000000000000000000000000000000000000') {
@@ -37,11 +37,11 @@ async function createDIDOnChain({ cccdHash, publicKey, userAddress, contract, pr
         throw error;
       }
     } catch (readErr) {
-      // If read fails, log and continue — some providers may throw for view calls with complex inputs
+      // Nếu đọc thất bại, ghi log và tiếp tục — một số nhà cung cấp có thể ném lỗi cho các cuộc gọi view với đầu vào phức tạp
       logger.warn('Failed to read cccdToAddress before createDID', { error: readErr.message });
     }
 
-    // 2) Check if target address already has a public key
+    // 2) Kiểm tra xem địa chỉ mục tiêu đã có khóa công khai chưa
     try {
       const existingPk = await contract.publicKeys(userAddress);
       if (existingPk && existingPk.length && existingPk !== '0x') {
@@ -55,7 +55,7 @@ async function createDIDOnChain({ cccdHash, publicKey, userAddress, contract, pr
       logger.warn('Failed to read publicKeys before createDID', { error: readErr.message });
     }
 
-    // 3) Check admin wallet balance
+    // 3) Kiểm tra số dư ví admin
     try {
       const bal = await provider.getBalance(adminWallet.address);
       logger.info('Admin wallet balance', { admin: adminWallet.address, balance: bal.toString() });
@@ -70,16 +70,7 @@ async function createDIDOnChain({ cccdHash, publicKey, userAddress, contract, pr
       logger.warn('Failed to read admin wallet balance', { error: balErr.message });
     }
 
-    // Log chi tiết arguments trước khi gửi
-    logger.info('createDID arguments', {
-      cccdHash,
-      publicKeyType: typeof publicKey,
-      publicKeyLength: publicKey?.length || 0,
-      publicKeyPreview: publicKey?.substring(0, 20) + '...',
-      userAddress
-    });
-
-    // Try callStatic first to get revert reason (if any)
+    // Thử callStatic trước để lấy lý do revert (nếu có)
     try {
       await contract.connect(adminWallet).createDID.staticCall(
         cccdHash,
@@ -96,7 +87,7 @@ async function createDIDOnChain({ cccdHash, publicKey, userAddress, contract, pr
         userAddress
       });
       
-      // Parse revert reason to user-friendly message
+      // Phân tích lý do revert để đưa ra thông báo rõ ràng hơn
       let userMessage = staticErr.reason || staticErr.message;
       let errorCode = 'CONTRACT_REVERT';
       
@@ -108,7 +99,7 @@ async function createDIDOnChain({ cccdHash, publicKey, userAddress, contract, pr
         errorCode = 'ADDRESS_ALREADY_HAS_DID';
       }
       
-      // Re-throw với message rõ ràng hơn
+      // Ném lỗi với thông điệp người dùng rõ ràng hơn
       const error = new Error(userMessage);
       error.code = errorCode;
       error.originalError = staticErr;

@@ -5,7 +5,7 @@
 
 const { adminLogin } = require('./auth.controller');
 const { getLoginLogs } = require('./logs.controller');
-const { importCCCD, getPreVerifiedCCCDs, blacklistCCCD } = require('./cccd.controller');
+const { getPreVerifiedCCCDs } = require('./cccd.controller');
 const { getDashboardStats, exportLogs } = require('./dashboard.controller');
 
 module.exports = {
@@ -16,9 +16,7 @@ module.exports = {
   getLoginLogs,
   
   // CCCD Management
-  importCCCD,
   getPreVerifiedCCCDs,
-  blacklistCCCD,
   
   // Dashboard & Analytics
   getDashboardStats,

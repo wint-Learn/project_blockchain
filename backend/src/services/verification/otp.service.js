@@ -20,11 +20,11 @@ function generateOTP() {
 
 /**
  * Lưu OTP vào database
- * @param {string} cccdNumberHash - Hash của CCCD
- * @param {string} phoneNumber - Số điện thoại
- * @param {string} otp - OTP code
- * @param {Object} pool - PostgreSQL pool
- * @returns {Promise<Date>} Expiry time
+  * @param {string} cccdNumberHash - Hash của CCCD
+  * @param {string} phoneNumber - Số điện thoại
+  * @param {string} otp - OTP code
+  * @param {Object} pool - là PostgreSQL pool, là 
+  * @returns {Promise<Date>} Expiration time
  */
 async function saveOTP(cccdNumberHash, phoneNumber, otp, pool) {
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
@@ -52,10 +52,8 @@ function sendOTPSMS(phoneNumber, otp, logger) {
   });
   
   console.log('\n========================================');
-  console.log('📱 SMS MOCK (Demo Mode)');
   console.log(`To: ${phoneNumber}`);
   console.log(`Message: Mã OTP của bạn là: ${otp}`);
-  console.log(`Có hiệu lực trong 5 phút.`);
   console.log('========================================\n');
 }
 
@@ -63,16 +61,18 @@ function sendOTPSMS(phoneNumber, otp, logger) {
  * Request OTP for CCCD verification
  * @param {string} cccdNumber - CCCD number (12 digits)
  * @param {string} phoneNumber - Phone number
+ * @param {Object} cccdInfo - CCCD information from QR code { fullName, dateOfBirth, gender, address, issueDate }
  * @param {Object} pool - PostgreSQL pool
  * @param {Object} logger - Winston logger
  * @returns {Promise<{success: boolean, message: string, expiresAt: Date}>}
  */
-async function requestOTP(cccdNumber, phoneNumber, pool, logger) {
+async function requestOTP(cccdNumber, phoneNumber, cccdInfo = {}, pool, logger) {
   const cccdNumberHash = hashCCCDNumber(cccdNumber);
   
   logger.info('OTP request', { 
     cccdNumber: cccdNumber.slice(0, 4) + '****', 
-    phoneNumber 
+    phoneNumber,
+    hasFullInfo: !!cccdInfo.fullName
   });
   
   // Check if CCCD exists in pre_verified_cccd table (CRITICAL CHECK)
@@ -105,17 +105,41 @@ async function requestOTP(cccdNumber, phoneNumber, pool, logger) {
     };
   }
   
+  // Update CCCD info if provided (from QR code scan)
+  if (cccdInfo.fullName || cccdInfo.dateOfBirth) {
+    try {
+      await pool.query(
+        `UPDATE pre_verified_cccd 
+         SET full_name = COALESCE($1, full_name),
+             date_of_birth = COALESCE($2, date_of_birth),
+             gender = COALESCE($3, gender),
+             address = COALESCE($4, address),
+             issue_date = COALESCE($5, issue_date)
+         WHERE cccd_number_hash = $6`,
+        [cccdInfo.fullName, cccdInfo.dateOfBirth, cccdInfo.gender, cccdInfo.address, cccdInfo.issueDate, cccdNumberHash]
+      );
+      logger.info('Updated CCCD info from QR code', { 
+        cccdNumberHash: cccdNumberHash.slice(0, 10) + '...',
+        fullName: cccdInfo.fullName 
+      });
+    } catch (error) {
+      logger.error('Failed to update CCCD info', { error: error.message });
+      // Continue even if update fails
+    }
+  }
+  
+  // hàm logger dùng để ghi log với thông tin chi tiết, hiển thị ở console và file log.
+  // file log này ở
   // Check if already verified or claimed
   if (currentStatus === 'verified') {
     logger.info('CCCD already verified, allowing re-verification', { cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' });
-    // Allow user to request new OTP (maybe they lost the token)
   }
   
   if (currentStatus === 'claimed') {
     logger.warn('CCCD already claimed', { cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' });
     return {
       success: false,
-      message: 'Số CCCD này đã được đăng ký DID rồi. Không thể yêu cầu OTP mới.'
+      message: 'Số căn cước này đã được đăng ký rồi. Không thể yêu cầu OTP mới.'
     };
   }
   
@@ -123,7 +147,7 @@ async function requestOTP(cccdNumber, phoneNumber, pool, logger) {
     logger.warn('CCCD blacklisted', { cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' });
     return {
       success: false,
-      message: 'Số CCCD đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.'
+      message: 'Số căn cước công dân này đã bị khóa. Vui lòng liên hệ bộ phận hỗ trợ.'
     };
   }
   
@@ -185,14 +209,6 @@ async function markOTPAsVerified(otpId, pool) {
   );
 }
 
-/**
- * Verify OTP code
- * @param {string} cccdNumberHash - Hash của CCCD
- * @param {string} otp - 6-digit OTP code
- * @param {Object} pool - PostgreSQL pool
- * @param {Object} logger - Winston logger
- * @returns {Promise<{success: boolean, message: string, verificationToken?: string, citizenInfo?: Object}>}
- */
 async function verifyOTP(cccdNumberHash, otp, pool, logger) {
   logger.info('OTP verification attempt', { 
     cccdNumberHash: cccdNumberHash.slice(0, 10) + '...' 

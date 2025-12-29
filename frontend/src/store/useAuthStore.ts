@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CCCDInfo } from '../utils/qr-parser';
+import type { CCCDInfo } from '../types/cccd';
 
 interface User {
   address: string;
@@ -63,10 +63,10 @@ export const useAuthStore = create<AuthState>()(
           address: state.user.address,
           cccdHash: state.user.cccdHash,
           anomalyScore: state.user.anomalyScore,
-          cccdInfo: state.user.cccdInfo, // PERSIST cccdInfo để hiển thị trên Dashboard
+          cccdInfo: state.user.cccdInfo, 
         } : null,
         token: state.token,
-        privateKey: state.privateKey, // Persist để có thể sign messages (demo only)
+        privateKey: state.privateKey, 
       }),
     }
   )

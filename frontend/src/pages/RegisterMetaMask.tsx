@@ -124,16 +124,14 @@ export default function RegisterMetaMask() {
 
         setLoading(true);
         try {
-            console.log('🔍 DEBUG: useExistingWallet =', useExistingWallet);
-            console.log('🔍 DEBUG: selectedAccount =', selectedAccount);
             
             let signature = null;
 
-            // If user wants to use existing wallet, sign message with selected account
+            // Nếu người dùng chọn sử dụng ví có sẵn, yêu cầu ký xác nhận
             if (useExistingWallet && selectedAccount) {
-                console.log('✅ User chose to use existing wallet:', selectedAccount);
+                console.log('User chose to use existing wallet:', selectedAccount);
                 
-                // Sign message to prove wallet ownership and recover public key
+                // Yêu cầu ký xác nhận để chứng minh quyền sở hữu ví và lấy khóa công khai
                 try {
                     enqueueSnackbar('Vui lòng ký xác nhận trong MetaMask...', { variant: 'info' });
                     signature = await signMessage('Register DID for e-Government');
@@ -150,17 +148,14 @@ export default function RegisterMetaMask() {
                 }
             }
 
-            // Build request data - only include walletAddress/signature if user chose existing wallet
+            // Chuẩn bị dữ liệu gửi lên backend
+            // Nếu người dùng chọn sử dụng ví có sẵn, chỉ thêm walletAddress và signature
             const requestData: any = {
                 ...formData,
                 verificationToken,
             };
-
-            console.log('🔍 DEBUG: Before adding wallet fields, useExistingWallet =', useExistingWallet);
-            console.log('🔍 DEBUG: selectedAccount =', selectedAccount);
-            console.log('🔍 DEBUG: signature =', signature ? 'EXISTS' : 'NULL');
-
-            // Only add walletAddress and signature if user wants to use existing wallet
+            
+            // Nếu người dùng chọn sử dụng ví có sẵn, chỉ thêm walletAddress và signature
             if (useExistingWallet && selectedAccount && signature) {
                 console.log('✅ Adding walletAddress and signature to request');
                 requestData.walletAddress = selectedAccount;
@@ -177,10 +172,10 @@ export default function RegisterMetaMask() {
                 enqueueSnackbar(response.data.message, { variant: 'success' });
 
                 if (useExistingWallet) {
-                    // User used existing wallet - go directly to login
+                    // Người dùng sử dụng ví có sẵn - chuyển trực tiếp đến trang đăng nhập
                     setTimeout(() => navigate('/login'), 2000);
                 } else {
-                    // Backend created new wallet - show QR/private key dialog
+                    // Backend tạo ví mới - hiển thị hộp thoại QR/private key
                     setWalletInfo({
                         qrCode: response.data.qrCode,
                         address: response.data.wallet.address,
@@ -193,7 +188,7 @@ export default function RegisterMetaMask() {
         } catch (error: any) {
             console.error('❌ Registration error:', error.response?.data);
 
-            // Handle specific error cases with appropriate messages and actions
+            // Xử lý các trường hợp lỗi cụ thể với thông báo và hành động phù hợp
             const errorData = error.response?.data;
             const errorMessage = errorData?.error || errorData?.message || 'Đăng ký thất bại';
             const errorCode = errorData?.code;
@@ -203,7 +198,7 @@ export default function RegisterMetaMask() {
                     'Số CCCD này đã được đăng ký trên blockchain. Vui lòng sử dụng chức năng đăng nhập.',
                     { variant: 'warning' }
                 );
-                // Auto redirect to login after 3 seconds
+                // Tự động chuyển hướng đến trang đăng nhập sau 3 giây
                 setTimeout(() => navigate('/login'), 3000);
             } else if (errorMessage.includes('Address already has DID') || errorMessage.includes('Địa chỉ ví đã có DID')) {
                 enqueueSnackbar(
@@ -216,7 +211,7 @@ export default function RegisterMetaMask() {
                     'Số CCCD chưa được xác thực OTP. Vui lòng xác thực lại.',
                     { variant: 'error' }
                 );
-                // Redirect to verify page
+                // Chuyển hướng đến trang xác thực
                 setTimeout(() => navigate('/verify'), 2000);
             } else if (errorCode === 'CCCD_ALREADY_EXISTS' || errorMessage.includes('đã được đăng ký với địa chỉ ví khác')) {
                 enqueueSnackbar(
@@ -369,7 +364,7 @@ export default function RegisterMetaMask() {
                         </Box>
                     </Box>
 
-                    {/* Option: Use existing MetaMask wallet */}
+                    {/* Tùy chọn: Sử dụng ví MetaMask có sẵn */}
                     <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                         <FormControlLabel
                             control={
@@ -378,7 +373,7 @@ export default function RegisterMetaMask() {
                                     onChange={(e) => {
                                         setUseExistingWallet(e.target.checked);
                                         if (!e.target.checked) {
-                                            // Reset account selection when unchecked
+                                            // Nếu bỏ chọn, xóa ví đã chọn
                                             setSelectedAccount('');
                                         }
                                     }}
@@ -399,7 +394,7 @@ export default function RegisterMetaMask() {
                             }
                         />
 
-                        {/* Show button to connect MetaMask */}
+                        {/* Hiển thị nút kết nối MetaMask */}
                         {useExistingWallet && !selectedAccount && (
                             <Box sx={{ mt: 2 }}>
                                 <Button
@@ -416,7 +411,7 @@ export default function RegisterMetaMask() {
                             </Box>
                         )}
 
-                        {/* 🆕 Show selected account */}
+                        {/* Hiển thị ví đã chọn */}
                         {useExistingWallet && selectedAccount && (
                             <Box sx={{ mt: 2 }}>
                                 <Alert severity="success" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -453,7 +448,7 @@ export default function RegisterMetaMask() {
                         {loading ? <CircularProgress size={24} /> : 'Đăng Ký DID'}
                     </Button>
 
-                    {/* 🆕 Show helper text if user needs to select wallet */}
+                    {/* Hiển thị văn bản trợ giúp nếu người dùng cần chọn ví */}
                     {useExistingWallet && !selectedAccount && (
                         <Alert severity="info" sx={{ mt: 2 }}>
                             Vui lòng kết nối MetaMask và chọn ví trước khi đăng ký
@@ -471,7 +466,7 @@ export default function RegisterMetaMask() {
                 </Box>
             </Paper>
 
-            {/* QR Code Dialog */}
+            {/* Hộp thoại QR Code */}
             {walletInfo && (
                 <WalletQRDisplay
                     open={showQR}

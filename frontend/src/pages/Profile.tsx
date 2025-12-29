@@ -3,27 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import {
   Container, Box, Typography, Paper, Divider, Alert, Chip
 } from '@mui/material';
+import {
+  AccountBalanceWallet as AccountBalanceWalletIcon,
+  Badge as BadgeIcon,
+  Home as HomeIcon,
+  Event as EventIcon,
+  Person as PersonIcon,
+  Cake as CakeIcon,
+  Wc as WcIcon,
+} from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { getUserProfile } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { useMetaMask } from '../hooks/useMetaMask';
 import UserLayout from '../components/layout/UserLayout';
 import LoadingSpinner from '../components/shared/LoadingSpinner';
-import PersonIcon from '@mui/icons-material/Person';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import BadgeIcon from '@mui/icons-material/Badge';
-import CakeIcon from '@mui/icons-material/Cake';
-import WcIcon from '@mui/icons-material/Wc';
-import HomeIcon from '@mui/icons-material/Home';
-import EventIcon from '@mui/icons-material/Event';
-
-interface DIDInfo {
-  address: string;
-  publicKey: string;
-  cccdHashOnChain: string;
-  hasMetadata: boolean;
-  registeredAt?: string;
-}
+import type { DIDInfo } from '../types/cccd';
 
 interface CCCDInfo {
   cccdNumber: string;
@@ -48,7 +43,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const { user } = useAuthStore();
-  const { account, isConnected } = useMetaMask();
+  useMetaMask();
 
   useEffect(() => {
     if (!user?.address) {
@@ -87,17 +82,6 @@ export default function Profile() {
   return (
     <UserLayout title="Thông tin cá nhân" showBackButton={true}>
       <Container maxWidth="lg" sx={{ py: 3 }}>
-
-        {/* Account Status Alert */}
-        {isConnected && account ? (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            <strong>Ví đã kết nối:</strong> {account}
-          </Alert>
-        ) : (
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            MetaMask chưa kết nối. Vui lòng kết nối ví để sử dụng đầy đủ tính năng.
-          </Alert>
-        )}
 
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3 }}>
           {/* Thông tin CCCD */}
@@ -179,7 +163,7 @@ export default function Profile() {
             </Box>
           )}
 
-          {/* Thông tin DID/Blockchain */}
+          {/* Thông tin DID */}
           <Box sx={{ flex: 1 }}>
             <Paper elevation={3} sx={{ p: 3, height: '100%' }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
@@ -190,31 +174,15 @@ export default function Profile() {
 
               {profileData?.didInfo ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  
                   <Box>
+                    
                     <Typography variant="body2" color="text.secondary">
-                      Địa chỉ ví:
+                      Địa chỉ ví liên kết: 
                     </Typography>
-                    <Typography variant="body1" fontFamily="monospace" sx={{ wordBreak: 'break-all' }}>
-                      {profileData.didInfo.address}
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Public Key:
-                    </Typography>
-                    <Typography variant="body2" fontFamily="monospace" sx={{ wordBreak: 'break-all' }}>
-                      {profileData.didInfo.publicKey.slice(0, 50)}...
-                    </Typography>
-                  </Box>
-
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      CCCD Hash (On-chain):
-                    </Typography>
-                    <Typography variant="body2" fontFamily="monospace" sx={{ wordBreak: 'break-all' }}>
-                      {profileData.didInfo.cccdHashOnChain}
-                    </Typography>
+                    <Typography variant="body1" fontFamily="monospace">
+                      {profileData.didInfo.address.slice(0, 6)}...{profileData.didInfo.address.slice(-4)}
+                    </Typography> 
                   </Box>
 
                   <Box>
@@ -222,7 +190,7 @@ export default function Profile() {
                       Trạng thái:
                     </Typography>
                     <Chip
-                      label="Đã đăng ký DID on-chain"
+                      label="Đã xác thực danh tính"
                       color="success"
                       size="small"
                     />
@@ -231,7 +199,7 @@ export default function Profile() {
                   {profileData.didInfo.registeredAt && (
                     <Box>
                       <Typography variant="body2" color="text.secondary">
-                        Ngày đăng ký DID:
+                        Ngày xác thực:
                       </Typography>
                       <Typography variant="body1">
                         {new Date(profileData.didInfo.registeredAt).toLocaleString('vi-VN')}
@@ -241,7 +209,7 @@ export default function Profile() {
                 </Box>
               ) : (
                 <Alert severity="warning">
-                  Không tìm thấy thông tin DID trên blockchain
+                  Bạn chưa có DID. Vui lòng thực hiện xác thực để tạo DID.
                 </Alert>
               )}
             </Paper>
@@ -261,7 +229,7 @@ export default function Profile() {
                 </Typography>
                 <Typography variant="body2">
                   Hệ thống phát hiện hoạt động đăng nhập có dấu hiệu bất thường.
-                  Nếu không phải bạn, vui lòng liên hệ admin.
+                  Nếu không phải bạn, vui lòng liên hệ hỗ trợ viên.
                 </Typography>
               </Box>
             </Alert>

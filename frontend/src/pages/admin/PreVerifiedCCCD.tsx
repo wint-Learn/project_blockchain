@@ -143,8 +143,8 @@ const PreVerifiedCCCD = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
-                  <TableCell>CCCD Hash</TableCell>
                   <TableCell>Số điện thoại</TableCell>
+                  <TableCell>CCCD mã hóa</TableCell>
                   <TableCell>Ghi chú</TableCell>
                   <TableCell>Trạng thái</TableCell>
                   <TableCell align="right">Thao tác</TableCell>
@@ -158,12 +158,12 @@ const PreVerifiedCCCD = () => {
                         #{record.id}
                       </Typography>
                     </TableCell>
+                    <TableCell>{record.phone_number}</TableCell>
                     <TableCell>
                       <Typography variant="body2" fontFamily="monospace" fontSize="0.75rem">
-                        {record.cccd_number || `${record.cccd_number_hash?.substring(0, 16)}...`}
+                        {record.cccd_number_hash?.substring(0, 16)}...
                       </Typography>
                     </TableCell>
-                    <TableCell>{record.phone_number}</TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 200 }}>
                         {record.notes || '-'}

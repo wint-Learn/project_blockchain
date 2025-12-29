@@ -35,6 +35,11 @@ async function importCCCDBatch(csvData, pool, logger) {
     
     const cccdIndex = headers.indexOf('cccd_number');
     const phoneIndex = headers.indexOf('phone_number');
+    const fullNameIndex = headers.indexOf('full_name');
+    const dobIndex = headers.indexOf('date_of_birth');
+    const genderIndex = headers.indexOf('gender');
+    const addressIndex = headers.indexOf('address');
+    const issueDateIndex = headers.indexOf('issue_date');
     const notesIndex = headers.indexOf('notes');
     
     // Process each row
@@ -45,6 +50,11 @@ async function importCCCDBatch(csvData, pool, logger) {
       const values = line.split(',').map(v => v.trim());
       const cccdNumber = values[cccdIndex];
       const phoneNumber = values[phoneIndex];
+      const fullName = fullNameIndex >= 0 ? values[fullNameIndex] : null;
+      const dateOfBirth = dobIndex >= 0 ? values[dobIndex] : null;
+      const gender = genderIndex >= 0 ? values[genderIndex] : null;
+      const address = addressIndex >= 0 ? values[addressIndex] : null;
+      const issueDate = issueDateIndex >= 0 ? values[issueDateIndex] : null;
       const notes = notesIndex >= 0 ? values[notesIndex] : '';
       
       try {
@@ -81,9 +91,9 @@ async function importCCCDBatch(csvData, pool, logger) {
         
         // Insert new record
         await pool.query(
-          `INSERT INTO pre_verified_cccd (cccd_number, cccd_number_hash, phone_number, status, notes)
-           VALUES ($1, $2, $3, 'pending', $4)`,
-          [cccdNumber, cccdNumberHash, phoneNumber, notes]
+          `INSERT INTO pre_verified_cccd (cccd_number, cccd_number_hash, full_name, date_of_birth, gender, address, issue_date, phone_number, status, notes)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)`,
+          [cccdNumber, cccdNumberHash, fullName, dateOfBirth, gender, address, issueDate, phoneNumber, notes]
         );
         
         results.imported++;
@@ -119,7 +129,7 @@ async function getPreVerifiedList(filters = {}, pool, logger) {
   try {
     const { status, limit = 50, offset = 0, search } = filters;
     
-    let query = 'SELECT id, cccd_number_hash, phone_number, status, notes, verified_at, claimed_at, created_at FROM pre_verified_cccd WHERE 1=1';
+    let query = 'SELECT id, cccd_number_hash, cccd_number, full_name, date_of_birth, gender, address, issue_date, phone_number, status, notes, verified_at, claimed_at, created_at FROM pre_verified_cccd WHERE 1=1';
     const params = [];
     let paramIndex = 1;
     
@@ -130,13 +140,13 @@ async function getPreVerifiedList(filters = {}, pool, logger) {
     }
     
     if (search) {
-      query += ` AND phone_number LIKE $${paramIndex}`;
+      query += ` AND (phone_number LIKE $${paramIndex} OR cccd_number LIKE $${paramIndex} OR full_name ILIKE $${paramIndex})`;
       params.push(`%${search}%`);
       paramIndex++;
     }
     
     // Get total count
-    const countQuery = query.replace('SELECT id, cccd_number_hash, phone_number, status, notes, verified_at, claimed_at, created_at', 'SELECT COUNT(*)');
+    const countQuery = query.replace('SELECT id, cccd_number_hash, cccd_number, full_name, date_of_birth, gender, address, issue_date, phone_number, status, notes, verified_at, claimed_at, created_at', 'SELECT COUNT(*)');
     const countResult = await pool.query(countQuery, params);
     const total = parseInt(countResult.rows[0].count);
     

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import {
-  Box, Drawer, Toolbar, Avatar, Typography, Divider, Stack,
+  Box, Drawer, Avatar, Typography, Divider, Stack,
   useTheme, useMediaQuery,
   List, ListItem, ListItemButton, ListItemIcon, ListItemText,
 } from '@mui/material';
@@ -144,7 +144,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      minHeight: '100vh', 
+      width: '100%', // Thêm width 100%
+      bgcolor: 'background.default' 
+    }}>
 
 
       {/* Drawer */}
@@ -184,13 +189,14 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: '1600px',
+          mx: 'auto',
+          py: 2
         }}
       >
-        <Toolbar /> {/* Spacer for AppBar */}
         {children}
       </Box>
+
     </Box>
   );
 };

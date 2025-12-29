@@ -162,6 +162,7 @@ export const useMetaMask = () => {
     const signMessage = async (message: string): Promise<string | null> => {
         const { ethereum } = window as any;
 
+        // Kiểm tra kết nối MetaMask
         if (!ethereum || !state.account) {
             setState(prev => ({
                 ...prev,
@@ -198,7 +199,7 @@ export const useMetaMask = () => {
     };
 
     /**
-     * Ngắt kết nối MetaMask (chỉ xóa state, không thể ép ngắt kết nối trong MetaMask)
+     * Ngắt kết nối MetaMask 
      */
     const disconnect = () => {
         setState(prev => ({

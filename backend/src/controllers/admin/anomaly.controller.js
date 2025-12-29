@@ -191,7 +191,7 @@ async function getAnomalySummary(req, res) {
     });
     
   } catch (error) {
-    logger.error('❌ Get anomaly summary error:', error);
+    logger.error('Get anomaly summary error:', error);
     return res.status(500).json({
       success: false,
       message: 'Lỗi khi tải tóm tắt anomalies',

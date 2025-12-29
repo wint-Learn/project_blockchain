@@ -29,10 +29,10 @@ async function registerDID({
   const cccdNumberHash = hashCCCDNumber(cccdNumber);
   const cccdHash = hashCCCD(qrData);
   
-  // 2) Verify pre-verification token (if provided)
+  // 2) Kiểm tra token xác thực (nếu có)
   await validateVerificationToken(verificationToken, cccdNumberHash, pool, logger);
   
-  // 3) Check if CCCD already registered
+  // 3) Kiểm tra xem CCCD đã được đăng ký chưa
   const existingUser = await checkCCCDExists(cccdNumber, pool);
   if (existingUser) {
     logger.warn('CCCD number already registered', { 

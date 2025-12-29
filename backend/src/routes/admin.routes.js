@@ -64,43 +64,13 @@ router.get('/logs',
 );
 
 /**
- * @route   POST /api/admin/cccd/import
- * @desc    Import batch CCCD từ CSV
- * @access  Admin
- */
-router.post('/cccd/import',
-  auditMiddleware('import_cccd', () => 'batch'),
-  adminController.importCCCD
-);
-
-/**
- * @route   GET /api/admin/cccd/list
- * @desc    Lấy danh sách pre-verified CCCD
- * @access  Admin
- */
-router.get('/cccd/list',
-  auditMiddleware('view_cccd_list', (req) => req.query.status || 'all'),
-  adminController.getPreVerifiedCCCDs
-);
-
-/**
  * @route   GET /api/admin/cccd
- * @desc    Lấy danh sách pre-verified CCCD (alias)
+ * @desc    Lấy danh sách pre-verified CCCD
  * @access  Admin
  */
 router.get('/cccd',
   auditMiddleware('view_cccd_list', () => 'all'),
   adminController.getPreVerifiedCCCDs
-);
-
-/**
- * @route   PUT /api/admin/cccd/:id/blacklist
- * @desc    Blacklist một CCCD
- * @access  Admin
- */
-router.put('/cccd/:id/blacklist',
-  auditMiddleware('blacklist_cccd', (req) => req.params.id),
-  adminController.blacklistCCCD
 );
 
 /**

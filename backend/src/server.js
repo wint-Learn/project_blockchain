@@ -51,7 +51,7 @@ app.use(limiter);
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// 🔍 DEBUG: Log raw body
+// DEBUG: Log raw body
 app.use((req, res, next) => {
   if (req.url === '/api/auth/register') {
     logger.info('🔍 MIDDLEWARE: Checking req.body after body-parser', {
@@ -66,8 +66,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// ============ DATABASE & BLOCKCHAIN SETUP ============
-
 // PostgreSQL
 const pool = new Pool({ connectionString: process.env.DB_CONNECTION_STRING });
 pool.connect()
@@ -77,7 +75,7 @@ pool.connect()
     // Continue running - some endpoints don't need DB
   });
 
-// Blockchain setup
+
 // Use Ganache for development, Polygon for production
 const rpcUrl = process.env.NODE_ENV === 'production'
   ? process.env.POLYGON_RPC_URL
